@@ -37,9 +37,16 @@
 #include "board.h"
 
 #include "brain.h"
+#include "dino.h"
 #include "demo_config.h"
 
 #define SHELL_BUFSIZE       (64U)
+
+static int cmd_dino(int argc, char **argv)
+{
+    dino_rock();
+    return 0;
+}
 
 static int _readc(void)
 {
@@ -51,6 +58,7 @@ static void _putc(int c)
     putchar((char)c);
 }
 static const shell_command_t _commands[] = {
+    { "dino", "Let the dino rock", cmd_dino },
     { NULL, NULL, NULL }
 };
 

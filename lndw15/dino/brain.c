@@ -58,7 +58,6 @@ static void _dispatch(uint8_t *data, size_t len)
     }
 
     uint8_t level = data[1];
-    printf("received level: %d\n", level);
     if (level > CONF_DINO_THRESHHOLD) {
         puts("Dino: rock!");
         dino_rock();

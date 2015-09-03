@@ -26,8 +26,8 @@
  * @author      Hauke Petersen <mail@haukepetersen.de>
  */
 
-#ifndef DEMO_CONFIG_H
-#define DEMO_CONFIG_H
+#ifndef DINO_H
+#define DINO_H
 
 #include "kernel.h"
 
@@ -43,5 +43,5 @@ void dino_rock(void);
 }
 #endif
 
-#endif /* DEMO_CONFIG_H*/
+#endif /* DINO_H*/
 /** @} */

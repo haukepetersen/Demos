@@ -12,7 +12,7 @@ USEMODULE += shell
 USEMODULE += shell_commands
 USEMODULE += ps
 USEMODULE += servo
-USEMODULE += ng_netif
+USEMODULE += ng_netif_default
 USEMODULE += auto_init_ng_netif
 
 # Comment this out to disable code in RIOT that does safety checking

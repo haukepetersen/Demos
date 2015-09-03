@@ -53,7 +53,7 @@
  * @{
  */
 #define CONF_DINO_GPIO              (GPIO_0)
-#define CONF_DINO_THRESHHOLD        (225U)
+#define CONF_DINO_THRESHHOLD        (240U)
 #define CONF_DINO_DELAY_WAITING     (50 * 1000)     /* 50ms */
 #define CONF_DINO_DELAY_ROCKING     (3000 * 1000)   /* rock for 3s */
 /**  @} */

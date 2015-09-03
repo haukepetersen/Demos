@@ -32,6 +32,10 @@
 
 #include "thread.h"
 #include "kernel.h"
+#include "hwtimer.h"
+#include "periph/gpio.h"
+
+#include "demo_config.h"
 
 #define PRIO            (THREAD_PRIORITY_MAIN - 1)
 
@@ -61,11 +65,9 @@ void *dino_thread(void *arg)
 void dino_init(void)
 {
     /* initialize dino's GPIO pin */
-    puts("init dino");
     gpio_init_out(CONF_DINO_GPIO, GPIO_NOPULL);
     /* start dino thread */
-    return thread_create(stack, sizeof(stack), PRIO, 0, dino_thread, NULL,
-                         "dino");
+    thread_create(stack, sizeof(stack), PRIO, 0, dino_thread, NULL, "dino");
 }
 
 void dino_rock(void)
