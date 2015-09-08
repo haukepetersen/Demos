@@ -15,10 +15,10 @@ USEMODULE += srf02
 # include the xtimer
 USEMODULE += xtimer
 # and include the gnrc stack
-# USEMODULE += gnrc_netif_default
-# USEMODULE += auto_init_gnrc_netif
-# USEMODULE += gnrc_ipv6_default
-# USEMODULE += gnrc_udp
+USEMODULE += gnrc_netif_default
+USEMODULE += auto_init_gnrc_netif
+USEMODULE += gnrc_ipv6_default
+USEMODULE += gnrc_udp
 # USEMODULE += gnrc_icmpv6_echo
 
 # Comment this out to disable code in RIOT that does safety checking

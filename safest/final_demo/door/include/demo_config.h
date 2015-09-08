@@ -1,41 +1,53 @@
 /*
- * Copyright (C) 2015 Hauke Petersen <mail@haukepetersen.de>
+ * Copyright (C) 2015 Freie Universität Berlin
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * This file is subject to the terms and conditions of the GNU Lesser
+ * General Public License v2.1. See the file LICENSE in the top level
+ * directory for more details.
  */
 
 /**
- * @ingroup     peta
+ * @ingroup     door
  * @{
  *
  * @file
  * @brief       Global configuration options
  *
- * @author      Hauke Petersen <mail@haukepetersen.de>
+ * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef PETA_CONFIG_H
-#define PETA_CONFIG_H
+#ifndef DOOR_DEMO_CONFIG_H
+#define DOOR_DEMO_CONFIG_H
 
 #include "periph/gpio.h"
 #include "periph/spi.h"
 #include "srf02.h"
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
+
+/**
+ * @brief   Message format and types
+ * @{
+ */
+#define CONF_MSG_HEAD               (23U)
+#define CONF_MSG_BUSY               (0U)
+#define CONF_MSG_FREE               (1U)
+
+#define CONF_MSG_RETRANS            (2)
+/** @} */
+
+/**
+ * @brief   Sink address and port
+ * @{
+ */
+#define CONF_SINK_ADDR              {{ 0xab, 0xcd, 0x00, 0x00, \
+                                       0x00, 0x00, 0x00, 0x00, \
+                                       0x00, 0x00, 0x00, 0x00, \
+                                       0x00, 0x00, 0x08, 0x15 }}
+#define CONF_SINK_PORT              { 0x2c, 0x2f }        /* port 11311 */
+/** @} */
 
 /**
  * @brief   Distance sensor configuration
@@ -49,5 +61,5 @@
 }
 #endif
 
-#endif /* PETA_CONFIG_H*/
+#endif /* DOOR_DEMO_CONFIG_H*/
 /** @} */

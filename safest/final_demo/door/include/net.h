@@ -11,26 +11,30 @@
  * @{
  *
  * @file
- * @brief       Interfaces of the sensing module
+ * @brief       Network abstraction interface
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef DOOR_SENSE_H
-#define DOOR_SENSE_H
+#ifndef DOOR_NET_H
+#define DOOR_NET_H
+
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @brief   Setup and run the sensor thread
+ * @brief   Send event notification to SINK server via UDP
+ *
+ * @param[in] type      event type
  */
-void sense_run(void);
+void net_send(uint8_t type);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* DOOR_SENSE_H*/
+#endif /* DOOR_NET_H*/
 /** @} */

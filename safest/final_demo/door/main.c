@@ -1,30 +1,19 @@
 /*
- * Copyright (C) 2015 Hauke Petersen <mail@haukepetersen.de>
+ * Copyright (C) 2015 Freie Universität Berlin
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * This file is subject to the terms and conditions of the GNU Lesser
+ * General Public License v2.1. See the file LICENSE in the top level
+ * directory for more details.
  */
 
 /**
- * @defgroup    lndw15_sensor Plant Sensor Application
- * @brief       Firmware for the plant sensor demo
+ * @ingroup     door
  * @{
  *
  * @file
- * @brief       Bootstrap the communication module and the shell
+ * @brief       Bootstrap the door sensor
  *
- * @author      Hauke Petersen <mail@haukepetersen.de>
+ * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  *
  * @}
  */
@@ -35,7 +24,6 @@
 #include "shell.h"
 
 #include "sense.h"
-#include "config.h"
 
 /**
  * @brief   Define some shell commands for testing the brain
