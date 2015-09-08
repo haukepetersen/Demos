@@ -1,0 +1,13 @@
+{
+  "name": "SAFEST-Alarm-Sink",
+  "version": "0.1.0",
+  "description": "Sensor Alarm Data Aggregation Server",
+  "main": "sink.js",
+  "repository": "",
+  "author": "Hauke Petersen <hauke.petersen@fu-berlin.de",
+  "license": "GPLv2",
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "node-redis": "*"
+  }
+}
