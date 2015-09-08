@@ -16,6 +16,9 @@
  * Setup the base configuration
  */
 const UDP_PORT =        11311
+const MSG_HEAD =        23
+const MSG_BUSY =        0
+const MSG_FREE =        1
 
 /**
  * Redis configuration
@@ -27,6 +30,7 @@ const REDIS_CHANNEL = 'door-event-channel';
 /**
  * Global variables and needed modules
  */
+var seq = 0;
 var dgram = require('dgram');
 var redis = require('node-redis');
 // var redisClient = redis.createClient(REDIS_PORT, REDIS_HOST);
@@ -35,8 +39,27 @@ var redis = require('node-redis');
 /**
  * React on received actions
  */
-function action(type) {
-    console.log('got action', type);
+function incoming(msg) {
+    /* check message format */
+    if (msg.length != 3 || msg[0] != MSG_HEAD) {
+        return;
+    }
+    /* check sequence number */
+    if ((msg[1] < 10) && (seq > 250)) {
+        seq = msg[1];
+    } else if (msg[1] <= seq) {
+        return;
+    } else {
+        seq = msg[1];
+    }
+    /* publish event */
+    if (msg[2] == MSG_BUSY) {
+        console.log("UDP: GOT BUSY EVENT");
+    } else if (msg[2] == MSG_FREE) {
+        console.log("UDP: GOT FREE EVENT");
+    } else {
+        console.log("UDP: GOT BOGUS EVENT");
+    }
 }
 
 /**
@@ -97,10 +120,8 @@ sock.bind(UDP_PORT, function() {
     console.log('Started UDP server at port', UDP_PORT);
 
     sock.on('message', function(msg, rinfo) {
+        incoming(msg);
         console.log('UDP: received %d bytes from %s:%d\n',
                     msg.length, rinfo.address, rinfo.port);
-        if ((msg.length == 2) && (msg[0] == 0x23)) {
-            action(msg[1]);
-        }
     });
 });
