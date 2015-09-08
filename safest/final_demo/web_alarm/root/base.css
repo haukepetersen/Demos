@@ -1,0 +1,24 @@
+
+
+#box-login {
+    width: 744px;
+    height: 279px;
+    border: 1px solid blue;
+    text-align: center;
+}
+
+#box-logo {
+    width: 744px;
+    height: 279px;
+    background-image: url(../img/logo.png);
+}
+
+div > span {
+    margin: 30px;
+    display: block;
+    font-weight: bold;
+}
+
+label {
+    display: block;
+}

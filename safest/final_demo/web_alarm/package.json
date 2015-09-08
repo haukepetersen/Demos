@@ -1,0 +1,15 @@
+{
+  "name": "SAFEST-Web-Alarm",
+  "version": "0.1.0",
+  "description": "Mockup Public Information Server",
+  "main": "web_alarm.js",
+  "repository": "",
+  "author": "Hauke Petersen <hauke.petersen@fu-berlin.de",
+  "license": "GPLv2",
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "socket.io": "*",
+    "express": "*",
+    "node-redis": "*"
+  }
+}
