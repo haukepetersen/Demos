@@ -13,10 +13,27 @@
     background-image: url(../img/logo.png);
 }
 
+#emimg {
+    width: 603px;
+    height: 604px;
+    background-image: url(../img/exit.png);
+}
+
+#emheader {
+    width: 543px;
+    margin: 30px;
+    display: block;
+    font-weight: bold;
+    font-family: serif;
+    font-size: 25px;
+    text-align: center;
+}
+
 div > span {
     margin: 30px;
     display: block;
     font-weight: bold;
+    text-align: center;
 }
 
 label {
