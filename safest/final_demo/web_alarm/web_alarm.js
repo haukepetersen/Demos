@@ -61,6 +61,7 @@ app.post('/*', function(req, res) {
         is_alarm = false;
         console.log("CLEAR");
     }
+    res.send("ok");
 });
 
 /**
