@@ -1,0 +1,15 @@
+{
+  "name": "Horst",
+  "version": "0.1.0",
+  "description": "CoAP web adapter",
+  "main": "horst.js",
+  "repository": "",
+  "author": "Hauke Petersen <hauke.petersen@fu-berlin.de",
+  "license": "GPLv2",
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "express": "*",
+    "socket.io": "*",
+    "coap": "*"
+  }
+}
