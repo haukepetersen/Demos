@@ -35,7 +35,7 @@
 
 #define DELAY           (1000000U)
 
-#define P1              "berlin"
+#define P1              "trento"
 #define P2              "light"
 #define P3              "01"
 
@@ -128,7 +128,7 @@ void send_coap_post(uint8_t *data, size_t len)
 int main(void)
 {
     isl29020_t dev;
-    const char *id = "light";
+    const char *id = "light-trento";
     char buf[64];
     uint32_t last_wakeup = xtimer_now();
 
@@ -140,6 +140,7 @@ int main(void)
         /* get light value */
         int value = isl29020_read(&dev);
         sprintf(buf, "%s:%i", id, value);
+        printf("value: %s\n", buf);
 
         /* push value using CoAP */
         send_coap_post((uint8_t *)buf, strlen(buf));
