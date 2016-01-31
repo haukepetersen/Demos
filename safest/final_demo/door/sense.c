@@ -21,14 +21,15 @@
 #include <stdio.h>
 
 #include "thread.h"
-#include "xtimer.h"
+#include "vtimer.h"
 #include "srf02.h"
 
 #include "net.h"
 #include "demo_config.h"
 
 #define BASELINE_COUNT          (30U)
-#define THRESHOLD               (50U)
+#define THRESHOLD               (25U)
+#define BOGUS                   (25U)
 
 
 #define PRIO                    (THREAD_PRIORITY_MAIN - 3)
@@ -43,13 +44,23 @@ static uint32_t baseline = 0;
 
 static void process(uint16_t range)
 {
+    /* filter bogus readings */
+    if (range < BOGUS) {
+        return;
+    }
     if (range < (baseline - THRESHOLD)) {
         ++evt_counter;
-    } else {
-        evt_counter = 0;
+    }
+    else {
+        if (evt_counter != 0) {
+            net_send(CONF_MSG_FREE);
+            printf("CLEAR: %i\n", (int)range);
+            evt_counter = 0;
+        }
     }
     if (evt_counter == 1) {
-        puts("EVENT");
+        net_send(CONF_MSG_BUSY);
+        printf("EVENT: %i\n", (int)range);
     }
 }
 
@@ -68,7 +79,7 @@ void *sense_thread(void *arg)
 {
     (void)arg;
     srf02_t dev;
-    uint32_t last_wakeup = xtimer_now();
+    // uint32_t last_wakeup = xtimer_now();
     uint16_t range;
 
     /* set initial data handler */
@@ -79,7 +90,8 @@ void *sense_thread(void *arg)
 
     /* read sensor periodically */
     while (1) {
-        xtimer_usleep_until(&last_wakeup, CONF_SENSE_PERIOD);
+        // xtimer_usleep_until(&last_wakeup, CONF_SENSE_PERIOD);
+        vtimer_usleep(30 * 1000);
         range = srf02_get_distance(&dev, SRF02_MODE_REAL_CM);
         on_data(range);
     }

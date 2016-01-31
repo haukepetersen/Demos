@@ -30,7 +30,7 @@ extern "C" {
 /**
  * @brief   Message format and types
  * @{
- */
+ */d
 #define CONF_MSG_HEAD               (23U)
 #define CONF_MSG_BUSY               (0U)
 #define CONF_MSG_FREE               (1U)
@@ -42,12 +42,20 @@ extern "C" {
  * @brief   Sink address and port
  * @{
  */
+#if 0
 #define CONF_SINK_ADDR              {{ 0xab, 0xcd, 0x00, 0x00, \
                                        0x00, 0x00, 0x00, 0x00, \
                                        0x00, 0x00, 0x00, 0x00, \
                                        0x00, 0x00, 0x08, 0x15 }}
+#endif
+#define CONF_SINK_ADDR              {{ 0xfe, 0x80, 0x00, 0x00, \
+                                       0x00, 0x00, 0x00, 0x00, \
+                                       0x23, 0x63, 0x7d, 0x44, \
+                                       0x92, 0xad, 0x2d, 0x15 }}
 #define CONF_SINK_PORT              { 0x2c, 0x2f }        /* port 11311 */
 /** @} */
+
+/* fe80::2363:7d44:92ad:2d15 */
 
 /**
  * @brief   Distance sensor configuration
