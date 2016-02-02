@@ -1,0 +1,13 @@
+{
+  "name": "SensorSim",
+  "version": "0.1.0",
+  "description": "Simulate CoAP/SenML based sensors",
+  "main": "sensorSim.js",
+  "repository": "",
+  "author": "Hauke Petersen <hauke.petersen@fu-berlin.de",
+  "license": "GPLv2",
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "coap": "*"
+  }
+}
