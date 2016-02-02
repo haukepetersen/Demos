@@ -34,50 +34,65 @@ const WEB_DIR       = __dirname + '/web';
 const DB_UPDATE_INT = 500;      /* how often to update the node list [in ms] */
 const STALE_TIME    = 2000;     /* time until a node gets stale [in ms] */
 
+const DATA_HISTORY  = 50;      /* save this amount of datapoints per device */
+
 /**
  * Load Node packages and initialize global variables
  */
 var coap            = require('coap');
-var coap_server     = coap.createServer();
-var express         = require('express');
-var exp_app         = express();
+var coap_server     = coap.createServer({'type': 'udp6'});
+var exp_app         = require('express')();
 var web_server      = require('http').createServer(exp_app);
-var web_io          = require('socket.io').listen(web_server);
+var web_sock        = require('socket.io')(web_server);
 var fs              = require('fs');
 
 /**
  * This object holds known and previously known devices
  */
-var devdb = {
-    'active': {},
-    'stale': {}
-}
+var nodes = {};
 
-var db_add = function(entry) {
-    if (entry.id in devdb['active']) {
-        delete devdb['active'][entry.id];
-    }
-    devdb['active'][entry.id] = {'has': entry.has, 'update': new Date().getTime()};
-    if (entry.id in devdb['stale']) {
-        delete devdb['stale'][entry.id];
+var db_update_senml = function(data, src_ip){
+    /* check data */
+    if (!Array.isArray(data) || (data[0].bn == undefined)) {
+        throw("invalid SenML input");
     }
 
-    console.log(devdb);
-}
+    var id = data[0].bn;
+    var now = new Date().getTime();
 
-var db_update = function() {
-    var time = new Date().getTime();
-    for (node in devdb['active']) {
-        var n = devdb['active'][node];
-        if ((time - n.update) > STALE_TIME) {
-            devdb['stale'][node] = n;
-            delete devdb['active'][node];
-
-            console.log(devdb);
+    if (nodes[id] == undefined) {
+        nodes[id] = {
+            'update': 0,
+            'ip': '',
+            'devs': {}
         }
     }
-}
 
+    var node = nodes[id];
+    node.update = now;
+    node.ip = src_ip;
+
+    for (var i = 1; i < data.length; i++) {
+        var sendev = data[i];
+        if (!(sendev.n in node.devs)) {
+            node.devs[sendev.n] = {
+                'unit': sendev.u,
+                'time': [],
+                'vals': []
+            }
+        }
+        var dev = node.devs[sendev.n];
+        if (dev.time.length > DATA_HISTORY) {
+            dev.time.pop();
+            dev.vals.pop();
+        }
+        dev.time.unshift(now);
+        dev.vals.unshift(sendev.v);
+    }
+
+    console.log("udpate from", id, '[' + node.ip + ']');
+    web_sock.emit('update', {'id': id, 'node': node});
+}
 
 /**
  * Define some CoAP helpers
@@ -90,19 +105,20 @@ var coap_resp = function(code, res, data) {
 /**
  * Definition of CoAP endpoints
  */
-var ep_reg = function(req, res) {
+var ep_senml = function(req, res) {
     if (req.method != 'POST') {
         coap_resp(405, res);
         return;
     }
 
-    var data = JSON.parse(req.payload);
-    if (!data.id || !data.has) {
+    try {
+        var data = JSON.parse(req.payload);
+        db_update_senml(data, req.rsinfo.address);
+        coap_resp(204, res);
+    } catch (e) {
+        console.log(e);
         coap_resp(406, res);
-        return;
     }
-    db_add(data);
-    coap_resp(204, res);
 }
 
 var ep_wellknown_core = function(req, res) {
@@ -133,17 +149,14 @@ var ep_test = function(req, res) {
 var eps = {
     '/.well-known/core': {
         'cb': ep_wellknown_core,
-        'methods': ['GET'],
         'desc': {'title': "Discover me"}
     },
     '/test': {
         'cb': ep_test,
-        'methods': ['GET'],
         'desc': {'title': "Some test resource", 'rt': "Test RT"}
     },
-    '/reg': {
-        'cb': ep_reg,
-        'methods': ['POST'],
+    '/senml': {
+        'cb': ep_senml,
         'desc': {'title': "Register a node"}
     }
 };
@@ -160,13 +173,12 @@ coap_server.on('request', function(req, res) {
     }
 });
 
-
 /**
  * Setup routes for the web server
  */
 exp_app.get('*', function(req, res) {
     var file = WEB_DIR + req.url;
-    if (file.match(/(\.js)|(\.css)|(\.png)$/g) != undefined) {
+    if (file.match(/(\.js)|(\.css)|(\.png)|(\.otf)$/g) != undefined) {
         try {
             fs.statSync(file);
             res.sendFile(file);
@@ -181,12 +193,27 @@ exp_app.get('*', function(req, res) {
 });
 
 /**
+ * Setup the web socket endpoint
+ */
+web_sock.on('connection', function(socket) {
+    console.log('connection from ', socket.id);
+
+    socket.on('cmd', function(cmd) {
+        console.log("got command", cmd);
+    });
+    socket.on('disconnect', function() {
+        console.log('disconnected ', socket.id);
+    });
+
+    socket.emit('init', nodes);
+});
+
+/**
  * Start everything
  */
 coap_server.listen(COAP_PORT, function() {
-    console.log("CoAP server running at coap://[::]:" + COAP_PORT);
+    console.log("CoAP server running at coap://[::1]:" + COAP_PORT);
 })
-web_server.listen(WEB_PORT, function() {
-    console.log("Web server running at http://[::]:" + WEB_PORT);
+web_server.listen(WEB_PORT, '::1', function() {
+    console.log("Web server running at http://[::1]:" + WEB_PORT);
 });
-setInterval(db_update, DB_UPDATE_INT);

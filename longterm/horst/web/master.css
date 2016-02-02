@@ -1,0 +1,134 @@
+/*
+ * RIOT colors
+ * red:     #bc1a29
+ * green:   #3fa687
+ * black:   #0e0e0e
+ *
+ * text:    #aaaaaa
+ * header:  #ffffff
+ */
+
+@font-face {
+    font-family: miso;
+    src: url("miso.otf") format("opentype");
+}
+
+@font-face {
+    font-family: miso;
+    font-weight: bold;
+    src: url("miso-bold.otf") format("opentype");
+}
+
+@font-face {
+    font-family: miso;
+    font-weight: light;
+    src: url("miso-light.otf") format("opentype");
+}
+
+
+body {
+    width: 800px;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    background-color: #0e0e0e;
+    color: #aaaaaa;
+    font-family: sans-serif;
+    font-size: 12px;
+}
+
+#head {
+    display: none;
+    height: 50px;
+    background-color: #ffffff;
+}
+
+#menu {
+    background-color: #cccccc;
+    font-size: 14px;
+}
+
+#menu > span {
+    cursor: pointer;
+}
+
+#listview {
+    width: 200px;
+    float: left;
+}
+
+#listview > #active-head {
+    border-color: #bc1a29;
+    color: #bc1a29;
+}
+
+#listview > #stale-head {
+    border-color: #3fa687;
+    color: #3fa687;
+}
+
+.listhead {
+    padding: 7px 0 2px 20px;
+    border-width: 1px 1px 1px 0;
+    border-style: solid;
+    font-size: 18px;
+    font-family: miso;
+    font-weight: bold;
+}
+
+#listview .node {
+    padding: 5px 0 5px 10px;
+    border-width: 0 0px 1px 0;
+    border-style: solid;
+    border-color: #353535;
+}
+
+#listview .node:hover {
+    color: #ffffff;
+    background-color: #1e1e1e;
+    cursor: pointer;
+}
+
+.k {
+    font-weight: bold;
+    font-family: miso;
+    font-size: 16px;
+    color: #ffffff;
+}
+.v {
+}
+
+#nodeview {
+    width: 500px;
+    margin: 10px 50px 0 50px;
+    float: left;
+}
+
+#nodeview > .snip {
+    padding: 15px 20px 2px 20px;
+    border-width: 0 0px 1px 0px;
+    border-style: solid;
+    border-color: #353535;
+}
+
+#nodeview > .info {
+    border-color: #3fa687;
+}
+
+#nodeview .row {
+    padding: 2px;
+    clear: both;
+}
+
+#nodeview .row > .col {
+    width: 30%;
+    float:left;
+}
+
+#nodeview .k {
+    width: 50px;
+    margin-right: 15px;
+    display: block;
+    float:left;
+    text-align: right;
+}

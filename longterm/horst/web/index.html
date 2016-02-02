@@ -1,20 +1,42 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <title>Sequences sunburst</title>
-    <script src="http://d3js.org/d3.v3.min.js"></script>
-    <link rel="stylesheet" type="text/css"
-      href="https://fonts.googleapis.com/css?family=Open+Sans:400,600">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Horst</title>
+
+    <link rel="icon" type="image/png" href="images/riot-symbol.png">
+
+    <script type="application/javascript" src="d3.min.js"></script>
+    <script type="application/javascript" src="c3.min.js"></script>
+    <script type="application/javascript" src="socket.io-1.4.5.js"></script>
+    <script type="application/javascript" src="smoothie.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="c3.min.css"/>
     <link rel="stylesheet" type="text/css" href="master.css"/>
   </head>
   <body>
 
-    <div id"menu">
-    Hello world
+    <div id="head">Heinz</div>
+
+    <div id="menu">
+      <span id="menu-nodes">Show nodes</span>
+      <span id="menu-some">Do something</span>
     </div>
 
+    <div id="listview">
+      <div id="active-head" class="listhead">Active nodes</div>
+      <div id="active"></div>
+      <div id="stale-head" class="listhead">Stale nodes</div>
+      <div id="stale"></div>
+    </div>
 
-    <script type="text/javascript" src="main.js"></script>
+    <div id="nodeview">
+      <div class="snip info">No node selected</div>
+    </div>
+
+    <div id="foot"></div>
+
+
+    <script type="application/javascript" src="main.js"></script>
   </body>
 </html>

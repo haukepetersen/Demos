@@ -9,7 +9,7 @@
   "readmeFilename": "README.md",
   "dependencies": {
     "express": "*",
-    "socket.io": "*",
+    "socket.io": ">1.0",
     "coap": "*"
   }
 }
