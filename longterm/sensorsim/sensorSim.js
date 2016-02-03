@@ -28,6 +28,7 @@
  * Setup the base configuration
  */
 const SERVER_PORT     = 5683;
+// const SERVER_IP     = 'fd38:3734:ad48:0:c260:e5f1:5ac2:53ef';
 const SERVER_IP     = '::1';
 const SERVER_EP     = '/senml';
 

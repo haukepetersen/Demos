@@ -214,6 +214,6 @@ web_sock.on('connection', function(socket) {
 coap_server.listen(COAP_PORT, function() {
     console.log("CoAP server running at coap://[::1]:" + COAP_PORT);
 })
-web_server.listen(WEB_PORT, '::1', function() {
+web_server.listen(WEB_PORT, function() {
     console.log("Web server running at http://[::1]:" + WEB_PORT);
 });

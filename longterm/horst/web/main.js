@@ -114,7 +114,7 @@ var snip_graph = function(k, dev) {
     c +=        '<span class="k">Unit:</span>';
     c +=        '<span class="v">' + dev.unit + '</span>';
     c +=      '</div><div class="col">';
-    c +=        '<span class="k">LastUpdate:</span>';
+    c +=        '<span class="k">Last Update:</span>';
     c +=        '<span id="' + k.replace(':', '-') + 'update" class="v">' + time + '</span>';
     c +=      '</div>';
     c +=    '</div>';
@@ -232,17 +232,28 @@ var add_chart = function(k, dev) {
     };
     charts[k].chart.streamTo(document.getElementById(k.replace(':', '-') + 'chart'));
 
-    charts[k].data.push(new TimeSeries());
+
     if (Array.isArray(dev.vals[0])) {
-        for (var i = 1; i < dev.vals[0].length; i++) {
-            charts[k].data.push(new TimeSeries());
+        for (var i = 0; i < dev.vals[0].length; i++) {
+            charts[k].data[i] = new TimeSeries();
+            charts[k].chart.addTimeSeries(charts[k].data[i], {'strokeStyle': line_colors[i]});
+            for (var s = dev.time.length - 1; s >= 0; s--) {
+                charts[k].data[i].append(dev.time[s], dev.vals[s][i]);
+            }
         }
     }
+    else {
+        charts[k].data[0] = new TimeSeries();
+        charts[k].chart.addTimeSeries(charts[k].data[0], {'strokeStyle': line_colors[0]});
+        for (var s = dev.time.length - 1; s >= 0; s--) {
+            charts[k].data[0].append(dev.time[s], dev.vals[s]);
+        }
+    }
+    console.log(charts[k].data[0]);
 
     charts[k].data.forEach(function(o, i) {
-        charts[k].chart.addTimeSeries(o, {'strokeStyle': line_colors[i]});
-    });
 
+    });
 
     update_chart(k, dev);
 }
