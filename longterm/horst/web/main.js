@@ -339,8 +339,23 @@ socket.on('init', function(data) {
     nodes = data;
     update_list_view();
 });
+
 socket.on('update', function(data) {
     var new_node = !(data.id in nodes);
+    /* hack: update time stamps */
+    var now = Date.now();
+    data.node.update = now;
+    data.node.devs.forEach(function(d) {
+        d.time[0] = Date.now();
+        if (Array.isArray(d.vals[0])) {
+            for (var i = 0; i < d.vals[0].length; i++) {
+                d.vals[0][i] = now;
+            }
+        }
+        else {
+            d.vals[0] = now;
+        }
+    });
     nodes[data.id] = data.node;
     update_node_view(data.id, data.node);
     if (new_node) {
