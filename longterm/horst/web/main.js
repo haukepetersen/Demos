@@ -135,8 +135,8 @@ var snip_s_temp = function(k, dev) {
 
 
 var update_list_view = function() {
-    var now = new Date().getTime();
-    console.log('up node, now', now, new Date(now).toISOString());
+    var now = Date.now();
+    console.log('up node, now', now, new Date(now).toLocaleTimeString());
     var count = [0, 0];
 
     /* clear lists */
