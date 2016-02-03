@@ -58,7 +58,7 @@ var db_update_senml = function(data, src_ip){
     }
 
     var id = data[0].bn;
-    var now = new Date().getTime();
+    var now = Date.now();
 
     if (nodes[id] == undefined) {
         nodes[id] = {

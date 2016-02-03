@@ -51,9 +51,9 @@ var chart_opts = {
     's:hum':    {'maxValue': 100, 'minValue': 0, 'millisPerPixel': 30},
     's:light':  {'maxValue': 1500, 'minValue': 0, 'millisPerPixel': 30},
     's:rgb':    {'maxValue': 256, 'minValue': 0, 'millisPerPixel': 30},
-    's:acc':    {'maxValue': 6, 'minValue': 0, 'millisPerPixel': 15},
-    's:mag':    {'maxValue': 30, 'minValue': 0, 'millisPerPixel': 15},
-    's:gyro':   {'maxValue': 2500, 'minValue': 0, 'millisPerPixel': 15},
+    's:acc':    {'maxValue': 4000, 'minValue': -4000, 'millisPerPixel': 15},
+    's:mag':    {'maxValue': 500, 'minValue': -500, 'millisPerPixel': 15},
+    's:gyro':   {'maxValue': 2500, 'minValue': -2500, 'millisPerPixel': 15},
     'a:rgb':    {'maxValue': 256, 'minValue': 0, 'millisPerPixel': 30},
 };
 
