@@ -136,6 +136,7 @@ var snip_s_temp = function(k, dev) {
 
 var update_list_view = function() {
     var now = new Date().getTime();
+    console.log("now");
     var count = [0, 0];
 
     /* clear lists */
@@ -249,13 +250,6 @@ var add_chart = function(k, dev) {
             charts[k].data[0].append(dev.time[s], dev.vals[s]);
         }
     }
-    console.log(charts[k].data[0]);
-
-    charts[k].data.forEach(function(o, i) {
-
-    });
-
-    update_chart(k, dev);
 }
 
 var update_chart = function(k, dev) {
