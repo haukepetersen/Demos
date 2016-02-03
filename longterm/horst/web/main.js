@@ -136,7 +136,7 @@ var snip_s_temp = function(k, dev) {
 
 var update_list_view = function() {
     var now = new Date().getTime();
-    console.log("now");
+    console.log('up node, now', now, new Date(now).toISOString());
     var count = [0, 0];
 
     /* clear lists */
@@ -148,6 +148,8 @@ var update_list_view = function() {
 
     Object.keys(nodes).sort().forEach(function(k) {
         var node = nodes[k];
+        console.log('up node', k, node.update, new Date(node.update).toLocaleTimeString());
+
         if ((now - node.update) < STALE_TIME) {
             add_list_item(k, node, act);
             ++count[0];
