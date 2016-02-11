@@ -35,6 +35,8 @@ const VIEW_S_ACC    = 's:acc';
 const VIEW_S_MAG    = 's:mag';
 const VIEW_S_GYRO   = 's:gyro';
 const VIEW_A_RGB    = 'a:rgb';
+const VIEW_A_LED    = 'a:led';
+const VIEW_A_BUTTON = 'a:button';
 
 const STALE_TIME    = 5000;     /* node gets stale if no updated in 5 seconds */
 
@@ -55,6 +57,8 @@ var chart_opts = {
     's:mag':    {'maxValue': 500, 'minValue': -500, 'millisPerPixel': 15},
     's:gyro':   {'maxValue': 2500, 'minValue': -2500, 'millisPerPixel': 15},
     'a:rgb':    {'maxValue': 256, 'minValue': 0, 'millisPerPixel': 30},
+    'a:led':    {'maxValue': 1, 'minValue': 0, 'millisPerPixel': 30},
+    'a:button': {'maxValue': 1, 'minValue': 0, 'millisPerPixel': 30},
 };
 
 var line_colors = [
