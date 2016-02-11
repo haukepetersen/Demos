@@ -41,7 +41,7 @@
 #define Q_SZ                (8)
 #define PRIO                (THREAD_PRIORITY_MAIN - 1)
 #define COAP_SERVER_PORT    (5683)
-#define SPORT				(1234)
+#define SPORT               (1234)
 #define UDP_PORT            (5683)
 #define MSG_LED_EVENT       (0x3338)
 #define MSG_BUTTON_EVENT    (0x3339)
@@ -96,31 +96,31 @@ const coap_endpoint_t endpoints[] =
 
 void send_coap_post(uint8_t *data, size_t len)
 {
-	uint8_t  snd_buf[128];
-	size_t   req_pkt_sz;
+    uint8_t  snd_buf[128];
+    size_t   req_pkt_sz;
 
-	coap_buffer_t payload = {
-			.p   = data,
-			.len = len
-	};
+    coap_buffer_t payload = {
+            .p   = data,
+            .len = len
+    };
 
-	coap_packet_t req_pkt = {
-			.header  = req_hdr,
-			.token   = (coap_buffer_t) { 0 },
-			.numopts = 1,
-			.opts    = {{{(uint8_t *)"senml", 5}, (uint8_t)COAP_OPTION_URI_PATH}},
-			.payload = payload
-	};
+    coap_packet_t req_pkt = {
+            .header  = req_hdr,
+            .token   = (coap_buffer_t) { 0 },
+            .numopts = 1,
+            .opts    = {{{(uint8_t *)"senml", 5}, (uint8_t)COAP_OPTION_URI_PATH}},
+            .payload = payload
+    };
 
-	req_pkt_sz = sizeof(req_pkt);
+    req_pkt_sz = sizeof(req_pkt);
 
-	if (coap_build(snd_buf, &req_pkt_sz, &req_pkt) != 0) {
-			printf("CoAP build failed :(\n");
-			return;
-	}
+    if (coap_build(snd_buf, &req_pkt_sz, &req_pkt) != 0) {
+            printf("CoAP build failed :(\n");
+            return;
+    }
 
-	conn_udp_sendto(snd_buf, req_pkt_sz, NULL, 0, &dst_addr, sizeof(dst_addr),
-					AF_INET6, SPORT, UDP_PORT);
+    conn_udp_sendto(snd_buf, req_pkt_sz, NULL, 0, &dst_addr, sizeof(dst_addr),
+                    AF_INET6, SPORT, UDP_PORT);
 }
 
 void *microcoap_server(void *arg)
@@ -194,7 +194,7 @@ void *beaconing(void *arg)
                 saul_reg_read(led_orange, &led_status);
                 pos += sprintf(&p_buf[pos], "{\"n\":\"a:led\", \"u\":\"bool\", \"v\":[%i]}",
                                (int)led_status.val[0]);
-                //printf("led status: %i\n", (int) led_status.val[0]);
+                // printf("led status: %i\n", (int) led_status.val[0]);
                 break;
             case MSG_BUTTON_EVENT:
                 xtimer_set_msg(&button_timer, button_interval, &button_msg, thread_getpid());
@@ -205,7 +205,7 @@ void *beaconing(void *arg)
                 last_button_status = (bool) button_status.val[0];
                 pos += sprintf(&p_buf[pos], "{\"n\":\"a:button\", \"u\":\"bool\", \"v\":[%i]}",
                                (int)!last_button_status);
-                //printf("button status: %i\n", (int) last_button_status);
+                // printf("button status: %i\n", (int) last_button_status);
                 repeat = 3;
                 break;
             case GNRC_NETAPI_MSG_TYPE_GET:
@@ -234,14 +234,19 @@ static const shell_command_t shell_commands[] = { { NULL, NULL, NULL } };
 
 int main(void)
 {
+    uint16_t chan = 15;
+    // netopt_enable_t acks = NETOPT_DISABLE;
+    kernel_pid_t ifs[GNRC_NETIF_NUMOF];
+
     msg_init_queue(_main_msg_q, Q_SZ);
 
-    kernel_pid_t ifs[GNRC_NETIF_NUMOF];
     gnrc_netif_get(ifs);
-    netopt_enable_t acks = NETOPT_DISABLE;
-    gnrc_netapi_set(ifs[0], NETOPT_AUTOACK, 0, &acks, sizeof(acks));
+    // gnrc_netapi_set(ifs[0], NETOPT_AUTOACK, 0, &acks, sizeof(acks));
     gnrc_netapi_get(ifs[0], NETOPT_IPV6_IID, 0, &iid, sizeof(eui64_t));
-	ipv6_addr_from_str(&dst_addr, "2001:affe:1234::1");
+    gnrc_netapi_set(ifs[0], NETOPT_CHANNEL, 0, &chan, sizeof(chan));
+    // ipv6_addr_from_str(&dst_addr, "2001:affe:1234::1");
+    ipv6_addr_from_str(&dst_addr, "fd38:3734:ad48:0:211d:50ce:a189:7cc4");
+
 
     thread_create(coap_stack, sizeof(coap_stack), PRIO, THREAD_CREATE_STACKTEST, microcoap_server,
                   NULL, "coap");
