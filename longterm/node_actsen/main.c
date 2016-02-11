@@ -47,6 +47,7 @@
 #define MSG_BUTTON_EVENT    (0x3339)
 #define LED_INTERVAL        (1000)
 #define BUTTON_INTERVAL     (250)
+#define MAX_RESPONSE_LEN    500
 
 static msg_t _main_msg_q[Q_SZ], _coap_msg_q[Q_SZ], _beac_msg_q[Q_SZ];
 static msg_t led_msg = { .type = MSG_LED_EVENT }, button_msg = { .type = MSG_BUTTON_EVENT };
@@ -60,6 +61,7 @@ uint8_t scratch_raw[1024];      /* microcoap scratch buffer */
 coap_rw_buffer_t scratch_buf = { scratch_raw, sizeof(scratch_raw) };
 ipv6_addr_t dst_addr;
 eui64_t iid;
+static uint8_t response[MAX_RESPONSE_LEN] = { 0 };
 
 coap_header_t req_hdr = {
         .version = 1,
@@ -69,8 +71,25 @@ coap_header_t req_hdr = {
         .mid     = {5, 57}            // is equivalent to 1337 when converted to uint16_t
 };
 
+static int handle_get_riot_board(coap_rw_buffer_t *scratch,
+                                 const coap_packet_t *inpkt, coap_packet_t *outpkt,
+                                 uint8_t id_hi, uint8_t id_lo)
+{
+    const char *riot_name = RIOT_BOARD;
+    int len = strlen(RIOT_BOARD);
+
+    memcpy(response, riot_name, len);
+
+    return coap_make_response(scratch, outpkt, (const uint8_t *)response, len,
+                              id_hi, id_lo, &inpkt->token, COAP_RSPCODE_CONTENT,
+                              COAP_CONTENTTYPE_TEXT_PLAIN, false);
+}
+
+static const coap_endpoint_path_t path_riot_board = { 2, { "riot", "board" } };
+
 const coap_endpoint_t endpoints[] =
 {
+    { COAP_METHOD_GET,	handle_get_riot_board, &path_riot_board, "ct=0"  },
     /* marks the end of the endpoints array: */
     { (coap_method_t)0, NULL, NULL, NULL }
 };
@@ -175,7 +194,7 @@ void *beaconing(void *arg)
                 saul_reg_read(led_orange, &led_status);
                 pos += sprintf(&p_buf[pos], "{\"n\":\"a:led\", \"u\":\"bool\", \"v\":[%i]}",
                                (int)led_status.val[0]);
-                printf("led status: %i\n", (int) led_status.val[0]);
+                //printf("led status: %i\n", (int) led_status.val[0]);
                 break;
             case MSG_BUTTON_EVENT:
                 xtimer_set_msg(&button_timer, button_interval, &button_msg, thread_getpid());
@@ -186,7 +205,7 @@ void *beaconing(void *arg)
                 last_button_status = (bool) button_status.val[0];
                 pos += sprintf(&p_buf[pos], "{\"n\":\"a:button\", \"u\":\"bool\", \"v\":[%i]}",
                                (int)!last_button_status);
-                printf("button status: %i\n", (int) last_button_status);
+                //printf("button status: %i\n", (int) last_button_status);
                 repeat = 3;
                 break;
             case GNRC_NETAPI_MSG_TYPE_GET:
