@@ -204,6 +204,18 @@ web_sock.on('connection', function(socket) {
     socket.on('disconnect', function() {
         console.log('disconnected ', socket.id);
     });
+    socket.on('coap_send', function(ctx) {
+        console.log("send something to coap server", ctx);
+        console.log('send to', ctx.addr, ctx.ep);
+        var req = coap.request({'host': ctx.addr,
+                                'method': 'POST',
+                                'pathname': "/" + ctx.ep,
+                                'confirmable': false});
+        // req.on('response', function(bla) {
+        //     console.log('got response');
+        // });
+        req.end(ctx.val);
+    });
 
     socket.emit('init', nodes);
 });

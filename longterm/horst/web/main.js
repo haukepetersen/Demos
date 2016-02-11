@@ -67,7 +67,6 @@ var line_colors = [
     '#aaaaaa'
 ];
 
-
 var val_toString = function(vals) {
     var res = '';
     if (Array.isArray(vals)) {
@@ -82,7 +81,7 @@ var val_toString = function(vals) {
         res = vals;
     }
     return res;
-}
+};
 
 var snip_infobox = function(id, node) {
     var c = '';
@@ -103,9 +102,44 @@ var snip_infobox = function(id, node) {
     c +=    '</div>';
 
     return c;
+};
+
+var snip_a_led = function(parent, k, dev) {
+    var time = new Date(dev.time[0]).toLocaleTimeString();
+    var vals = val_toString(dev.vals[0]);
+
+    var c = '';
+    c +=    '<div class="row">';
+    c +=      '<div class="col">';
+    c +=        '<span class="k">Type:</span>';
+    c +=        '<span class="v">' + k + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Unit:</span>';
+    c +=        '<span class="v">' + dev.unit + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Last Update:</span>';
+    c +=        '<span id="' + k.replace(':', '-') + 'update" class="v">' + time + '</span>';
+    c +=      '</div>';
+    c +=    '</div>';
+    c +=    '<div class="row">';
+    c +=      '<span class="k">Value(s):</span>';
+    c +=      '<span id="' + k.replace(':', '-') + 'val" class="v">' + vals + '</span>';
+    c +=    '</div>';
+    c +=    '<div class="row">';
+    c +=        '<input type="button" value="on" id="' + k.replace(':', '-') + '_set_on" />';
+    c +=        '<input type="button" value="off" id="' + k.replace(':', '-') + '_set_off" />';
+    c +=    '</div>';
+
+    parent.html(c);
+    d3.select("#" + k.replace(':', '-') + "_set_on").on('click', function() {
+        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'led', 'val': '1'});
+    });
+    d3.select("#" + k.replace(':', '-') + "_set_off").on('click', function() {
+        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'led', 'val': '0'});
+    });
 }
 
-var snip_graph = function(k, dev) {
+var snip_graph = function(parent, k, dev) {
     var time = new Date(dev.time[0]).toLocaleTimeString();
     var vals = val_toString(dev.vals[0]);
 
@@ -130,8 +164,9 @@ var snip_graph = function(k, dev) {
     // c +=      '<div id="' + k.replace(':', '-') + 'chart"></div>';
     c +=        '<canvas id="' + k.replace(':', '-') + 'chart" width="460" height="200"></canvas>'
     // c +=    '</div>';
-    return c;
-}
+
+    parent.html(c);
+};
 
 var update_list_view = function() {
     var now = Date.now();
@@ -193,10 +228,15 @@ var display_node = function(id, node) {
         .html(snip_infobox(id, node));
 
     Object.keys(node.devs).forEach(function(k) {
-        nodeview.append('div')
-            .attr('class', 'snip')
-            .html(snip_graph(k, node.devs[k]));
-        add_chart(k, node.devs[k]);
+        var view = nodeview.append('div').attr('class', 'snip');
+
+        if (k == 'a:led') {
+            snip_a_led(view, k, node.devs[k]);
+        }
+        else {
+            snip_graph(view, k, node.devs[k]);
+            add_chart(k, node.devs[k]);
+        }
     });
 
     active_node = id;
@@ -214,7 +254,9 @@ var update_node_view = function(id, node) {
         d3.select("#" + k.replace(':', '-') + 'update').html(time);
         d3.select("#" + k.replace(':', '-') + 'val').html(vals);
 
-        update_chart(k, dev);
+        if (k != 'a:led') {
+            update_chart(k, dev);
+        }
     }
 }
 
@@ -229,7 +271,6 @@ var add_chart = function(k, dev) {
         'data': []
     };
     charts[k].chart.streamTo(document.getElementById(k.replace(':', '-') + 'chart'));
-
 
     if (Array.isArray(dev.vals[0])) {
         for (var i = 0; i < dev.vals[0].length; i++) {
@@ -259,73 +300,6 @@ var update_chart = function(k, dev) {
         charts[k].data[0].append(dev.time[0], dev.vals[0]);
     }
 };
-
-// var make_chart = function(k, dev) {
-//     charts[k] = c3.generate({
-//         'bindto': '#' + k.replace(':', '-') + 'chart',
-//         'size': {
-//             'height': 200,
-//         },
-//         'data': {
-//             'x': 'time',
-//             'columns': [],
-//             'type': 'line',
-//             'colors': {
-//                 'a': '#3fa687',
-//                 'b': '#bc1a29',
-//                 'c': '#aaaaaa'
-//             }
-//         },
-//         'axis': {
-//             'x': {
-//                 'type': 'time',
-//                 'tick': {
-//                     'rotate': 90,
-//                     'multiline': false
-//                 }
-//             },
-//             'y': {
-//                 'label': {
-//                     'text': dev.unit,
-//                     'position': 'outer-middle'
-//                 }
-//             }
-//         }
-//     });
-
-//     update_chart(k, dev);
-// }
-
-// var update_chart = function(k, dev) {
-//     console.log("updating chart");
-
-//     var cols = [];
-//     var time = ['time'];
-//     var rows = [['a'], ['b'], ['c']];
-
-//     dev.time.forEach(function(t) {
-//         time.push(t);
-//     });
-//     cols.push(time);
-
-//     dev.vals.forEach(function(v) {
-//         if (Array.isArray(v)) {
-//             for (var i = 0; i < v.length; i++) {
-//                 rows[i].push(v[i]);
-//             }
-//         }
-//         else {
-//             rows[0].push(v);
-//         }
-//     });
-//     for (var i = 0; i < 3; i++) {
-//         if (rows[i].length > 1) {
-//             cols.push(rows[i]);
-//         }
-//     }
-
-//     charts[k].load({'columns': cols});
-// }
 
 /**
  * Configure web socket endpoints
