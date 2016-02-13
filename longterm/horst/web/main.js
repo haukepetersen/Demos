@@ -49,7 +49,7 @@ var charts = {};
 var active_node = undefined;
 
 var chart_opts = {
-    's:temp':   {'maxValue': 75, 'minValue': 0, 'millisPerPixel': 30},
+    's:temp':   {'maxValue': 40, 'minValue': 20, 'millisPerPixel': 30},
     's:hum':    {'maxValue': 100, 'minValue': 0, 'millisPerPixel': 30},
     's:light':  {'maxValue': 1500, 'minValue': 0, 'millisPerPixel': 30},
     's:rgb':    {'maxValue': 256, 'minValue': 0, 'millisPerPixel': 30},
