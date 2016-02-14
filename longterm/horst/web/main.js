@@ -139,6 +139,40 @@ var snip_a_led = function(parent, k, dev) {
     });
 }
 
+var snip_a_rgb = function(parent, k, dev) {
+    var time = new Date(dev.time[0]).toLocaleTimeString();
+    var vals = val_toString(dev.vals[0]);
+
+    var c = '';
+    c +=    '<div class="row">';
+    c +=      '<div class="col">';
+    c +=        '<span class="k">Type:</span>';
+    c +=        '<span class="v">' + k + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Unit:</span>';
+    c +=        '<span class="v">' + dev.unit + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Last Update:</span>';
+    c +=        '<span id="' + k.replace(':', '-') + 'update" class="v">' + time + '</span>';
+    c +=      '</div>';
+    c +=    '</div>';
+    c +=    '<div class="row">';
+    c +=      '<span class="k">Value(s):</span>';
+    c +=      '<span id="' + k.replace(':', '-') + 'val" class="v">' + vals + '</span>';
+    c +=    '</div>';
+    c +=    '<div class="row">';
+    c +=        '<input id="' + k.replace(':', '-') + '_rgb" value="' + vals + '">';
+    c +=    '</div>';
+
+    parent.html(c);
+
+    new jscolor(document.getElementById(k.replace(':', '-') + '_rgb'), {})
+    d3.select("#" + k.replace(':', '-') + "_rgb").on('change', function() {
+        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'rgb',
+                    'val': '#' + this.value});
+    });
+}
+
 var snip_graph = function(parent, k, dev) {
     var time = new Date(dev.time[0]).toLocaleTimeString();
     var vals = val_toString(dev.vals[0]);
@@ -227,19 +261,22 @@ var display_node = function(id, node) {
         .attr('class', 'snip info')
         .html(snip_infobox(id, node));
 
+    active_node = id;
+
     Object.keys(node.devs).forEach(function(k) {
         var view = nodeview.append('div').attr('class', 'snip');
 
         if (k == 'a:led') {
             snip_a_led(view, k, node.devs[k]);
         }
+        else if (k == 'a:rgb') {
+            snip_a_rgb(view, k, node.devs[k]);
+        }
         else {
             snip_graph(view, k, node.devs[k]);
             add_chart(k, node.devs[k]);
         }
     });
-
-    active_node = id;
 }
 
 var update_node_view = function(id, node) {
@@ -254,7 +291,7 @@ var update_node_view = function(id, node) {
         d3.select("#" + k.replace(':', '-') + 'update').html(time);
         d3.select("#" + k.replace(':', '-') + 'val').html(vals);
 
-        if (k != 'a:led') {
+        if ((k != 'a:led') && (k != 'a:rgb')) {
             update_chart(k, dev);
         }
     }
