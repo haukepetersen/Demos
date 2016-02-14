@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = node_actsen
+APPLICATION = node_iotlab-m3
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= iotlab-m3
