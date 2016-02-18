@@ -185,9 +185,9 @@ static void send_update(size_t pos, char *buf)
     mma8652_read(&tri_dev, &tri_x, &tri_y, &tri_z, &tri_status);
     mag3110_read(&mag_dev, &mag_x, &mag_y, &mag_z, &mag_status);
 
-    pos += sprintf(&buf[pos], "{\"n\":\"a:led\", \"u\":\"bool\", \"v\":\"%c\"}]",
+    pos += sprintf(&buf[pos], "{\"n\":\"a:led\", \"u\":\"bool\", \"v\":\"%c\"},",
                    led);
-    pos += sprintf(&buf[pos], "{\"n\":\"s:acc\", \"u\":\"g\", \"v\":\"[%d, %d, %d]\"}]",
+    pos += sprintf(&buf[pos], "{\"n\":\"s:acc\", \"u\":\"g\", \"v\":\"[%d, %d, %d]\"},",
                    tri_x, tri_y, tri_z);
     pos += sprintf(&buf[pos], "{\"n\":\"s:mag\", \"u\":\"uT\", \"v\":\"[%d, %d, %d]\"}]",
                    mag_x, mag_y, mag_z);
