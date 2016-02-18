@@ -51,8 +51,12 @@
 #define UDP_PORT            (5683)
 #define MAX_RESPONSE_LEN    (500)
 
-static msg_t _coap_msg_q[Q_SZ], _beac_msg_q[Q_SZ], _main_msg_q[Q_SZ];
-static char coap_stack[THREAD_STACKSIZE_MAIN], beac_stack[THREAD_STACKSIZE_MAIN];
+#ifdef WITH_SHELL
+static msg_t _main_msg_q[Q_SZ];
+static char beac_stack[THREAD_STACKSIZE_DEFAULT];
+#endif
+static msg_t _coap_msg_q[Q_SZ], _beac_msg_q[Q_SZ];
+static char coap_stack[THREAD_STACKSIZE_DEFAULT];
 
 static uint8_t udp_buf[512];
 static uint8_t scratch_raw[1024];      /* microcoap scratch buffer */
@@ -222,12 +226,16 @@ void *beaconing(void *arg)
     return NULL;
 }
 
+#ifdef WITH_SHELL
 static const shell_command_t shell_commands[] = { { NULL, NULL, NULL } };
+#endif
 
 int main(void)
 {
+#ifdef WITH_SHELL
     /* initialize message queue */
     msg_init_queue(_main_msg_q, Q_SZ);
+#endif
 
     eui64_t iid;
     // uint16_t chan = 15;
@@ -257,12 +265,14 @@ int main(void)
 
     thread_create(coap_stack, sizeof(coap_stack), PRIO - 1, THREAD_CREATE_STACKTEST, microcoap_server,
                   NULL, "coap");
+#ifdef WITH_SHELL
     thread_create(beac_stack, sizeof(beac_stack), PRIO, THREAD_CREATE_STACKTEST, beaconing,
                   NULL, "beaconing");
-
-
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
+#else
+    beaconing(NULL);
+#endif
 
     return 0;
 }

@@ -53,8 +53,11 @@
 #define LIGHT_RANGE         ISL29020_RANGE_16K
 #define TP_RATE             LPS331AP_RATE_7HZ
 
-static msg_t _beac_msg_q[Q_SZ], _main_msg_q[Q_SZ];
+#ifdef WITH_SHELL
+static msg_t _main_msg_q[Q_SZ];
 static char beac_stack[THREAD_STACKSIZE_DEFAULT];
+#endif
+static msg_t _beac_msg_q[Q_SZ];
 
 static hdc1000_t th_dev;
 static mpl3115a2_t p_dev;
@@ -171,22 +174,26 @@ void *beaconing(void *arg)
     return NULL;
 }
 
+#ifdef WITH_SHELL
 static const shell_command_t shell_commands[] = { { NULL, NULL, NULL } };
+#endif
 
 int main(void)
 {
+#ifdef WITH_SHELL
     /* initialize message queue */
     msg_init_queue(_main_msg_q, Q_SZ);
+#endif
 
     eui64_t iid;
     // uint16_t chan = 15;
-    //netopt_enable_t acks = NETOPT_DISABLE;
+    netopt_enable_t acks = NETOPT_DISABLE;
     kernel_pid_t ifs[GNRC_NETIF_NUMOF];
 
     gnrc_netif_get(ifs);
-    //gnrc_netapi_set(ifs[0], NETOPT_AUTOACK, 0, &acks, sizeof(acks));
+    gnrc_netapi_set(ifs[0], NETOPT_AUTOACK, 0, &acks, sizeof(acks));
     // gnrc_netapi_set(ifs[0], NETOPT_CHANNEL, 0, &chan, sizeof(chan));
-    ipv6_addr_from_str(&dst_addr, "beef::1");
+    ipv6_addr_from_str(&dst_addr, "2001:affe:1234::1");
     // ipv6_addr_from_str(&dst_addr, "fd38:3734:ad48:0:211d:50ce:a189:7cc4");
 
     /* initialize senml payload */
@@ -206,11 +213,14 @@ int main(void)
     tcs37727_init(&light_dev, TCS37727_I2C, TCS37727_ADDR, TCS37727_ATIME_DEFAULT);
     tcs37727_set_rgbc_active(&light_dev);
 
+#ifdef WITH_SHELL
     thread_create(beac_stack, sizeof(beac_stack), PRIO, THREAD_CREATE_STACKTEST, beaconing,
                   NULL, "beaconing");
-
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
+#else
+    beaconing(NULL);
+#endif
 
     return 0;
 }
