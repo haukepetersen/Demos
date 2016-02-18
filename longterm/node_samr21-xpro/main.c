@@ -48,8 +48,12 @@
 #define UDP_PORT            (5683)
 #define MAX_RESPONSE_LEN    (500)
 
-static msg_t _coap_msg_q[Q_SZ], _beac_msg_q[Q_SZ], _main_msg_q[Q_SZ];
-static char coap_stack[THREAD_STACKSIZE_DEFAULT], beac_stack[THREAD_STACKSIZE_DEFAULT];
+#ifdef WITH_SHELL
+static msg_t _main_msg_q[Q_SZ];
+static char beac_stack[THREAD_STACKSIZE_DEFAULT];
+#endif
+static msg_t _coap_msg_q[Q_SZ], _beac_msg_q[Q_SZ];
+static char coap_stack[THREAD_STACKSIZE_DEFAULT];
 
 static uint8_t udp_buf[512];
 static uint8_t scratch_raw[1024];      /* microcoap scratch buffer */
@@ -85,9 +89,6 @@ static int handle_post_rgb(coap_rw_buffer_t *scratch,
 				  (((str[4] > '9') ? (str[4] &~ 0x20) - 'A' + 10 : (str[4] - '0')) <<  8) | // G
 				  (((str[5] > '9') ? (str[5] &~ 0x20) - 'A' + 10 : (str[5] - '0')) <<  4) | // B
 				  (((str[6] > '9') ? (str[6] &~ 0x20) - 'A' + 10 : (str[6] - '0')) <<  0) ; // B
-	}
-	else {
-        puts("wrong hex color format");
 	}
 
     return coap_make_response(scratch, outpkt, NULL, 0,
@@ -142,7 +143,7 @@ void *microcoap_server(void *arg)
     return NULL;
 }
 
-void send_coap_post(uint8_t *data, size_t len)
+static void send_coap_post(uint8_t *data, size_t len)
 {
     uint8_t  snd_buf[128];
     size_t   req_pkt_sz;
@@ -163,8 +164,7 @@ void send_coap_post(uint8_t *data, size_t len)
     req_pkt_sz = sizeof(req_pkt);
 
     if (coap_build(snd_buf, &req_pkt_sz, &req_pkt) != 0) {
-            printf("CoAP build failed :(\n");
-            return;
+        return;
     }
 
     conn_udp_sendto(snd_buf, req_pkt_sz, NULL, 0, &dst_addr, sizeof(dst_addr),
@@ -211,25 +211,27 @@ void *beaconing(void *arg)
     return NULL;
 }
 
+#ifdef WITH_SHELL
 static const shell_command_t shell_commands[] = { { NULL, NULL, NULL } };
+#endif
 
 int main(void)
 {
+#ifdef WITH_SHELL
     /* initialize message queue */
     msg_init_queue(_main_msg_q, Q_SZ);
+#endif
 
     eui64_t iid;
     // uint16_t chan = 15;
-    //netopt_enable_t acks = NETOPT_DISABLE;
+    netopt_enable_t acks = NETOPT_DISABLE;
     kernel_pid_t ifs[GNRC_NETIF_NUMOF];
 
     gnrc_netif_get(ifs);
-    //gnrc_netapi_set(ifs[0], NETOPT_AUTOACK, 0, &acks, sizeof(acks));
-    ipv6_addr_from_str(&dst_addr, "beef::1");
+    gnrc_netapi_set(ifs[0], NETOPT_AUTOACK, 0, &acks, sizeof(acks));
+    ipv6_addr_from_str(&dst_addr, "2001:affe:1234::1");
     // gnrc_netapi_set(ifs[0], NETOPT_CHANNEL, 0, &chan, sizeof(chan));
     // ipv6_addr_from_str(&dst_addr, "fd38:3734:ad48:0:211d:50ce:a189:7cc4");
-
-
 
     /* initialize senml payload */
     gnrc_netapi_get(ifs[0], NETOPT_IPV6_IID, 0, &iid, sizeof(eui64_t));
@@ -240,15 +242,16 @@ int main(void)
                            iid.uint8[4], iid.uint8[5], iid.uint8[6], iid.uint8[7]);
     initial_pos += sprintf(&p_buf[initial_pos], "\"},");
 
-
     thread_create(coap_stack, sizeof(coap_stack), PRIO - 1, THREAD_CREATE_STACKTEST, microcoap_server,
                   NULL, "coap");
+#ifdef WITH_SHELL
     thread_create(beac_stack, sizeof(beac_stack), PRIO, THREAD_CREATE_STACKTEST, beaconing,
                   NULL, "beaconing");
-
-
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
+#else
+    beaconing(NULL);
+#endif
 
     return 0;
 }
