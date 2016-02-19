@@ -34,9 +34,11 @@ const VIEW_S_RGB    = 's:rgb';
 const VIEW_S_ACC    = 's:acc';
 const VIEW_S_MAG    = 's:mag';
 const VIEW_S_GYRO   = 's:gyro';
+const VIEW_S_WINDOW = 's:window';
 const VIEW_A_RGB    = 'a:rgb';
 const VIEW_A_LED    = 'a:led';
 const VIEW_A_BUTTON = 'a:button';
+const VIEW_A_WINDOW = 'a:window';
 
 const STALE_TIME    = 5000;     /* node gets stale if no updated in 5 seconds */
 
@@ -59,6 +61,7 @@ var chart_opts = {
     'a:rgb':    {'maxValue': 256, 'minValue': 0, 'millisPerPixel': 30},
     'a:led':    {'maxValue': 1, 'minValue': 0, 'millisPerPixel': 30},
     'a:button': {'maxValue': 1, 'minValue': 0, 'millisPerPixel': 30},
+    'a:window': {'maxValue': 1, 'minValue': 0, 'millisPerPixel': 30},
 };
 
 var line_colors = [
@@ -136,6 +139,41 @@ var snip_a_led = function(parent, k, dev) {
     });
     d3.select("#" + k.replace(':', '-') + "_set_off").on('click', function() {
         socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'led', 'val': '0'});
+    });
+}
+
+var snip_a_window = function(parent, k, dev) {
+    var time = new Date(dev.time[0]).toLocaleTimeString();
+    var vals = val_toString(dev.vals[0]);
+
+    var c = '';
+    c +=    '<div class="row">';
+    c +=      '<div class="col">';
+    c +=        '<span class="k">Type:</span>';
+    c +=        '<span class="v">' + k + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Unit:</span>';
+    c +=        '<span class="v">' + dev.unit + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Last Update:</span>';
+    c +=        '<span id="' + k.replace(':', '-') + 'update" class="v">' + time + '</span>';
+    c +=      '</div>';
+    c +=    '</div>';
+    c +=    '<div class="row">';
+    c +=      '<span class="k">Value(s):</span>';
+    c +=      '<span id="' + k.replace(':', '-') + 'val" class="v">' + vals + '</span>';
+    c +=    '</div>';
+    c +=    '<div class="row">';
+    c +=        '<input type="button" value="open" id="' + k.replace(':', '-') + '_set_on" />';
+    c +=        '<input type="button" value="close" id="' + k.replace(':', '-') + '_set_off" />';
+    c +=    '</div>';
+
+    parent.html(c);
+    d3.select("#" + k.replace(':', '-') + "_set_on").on('click', function() {
+        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'window', 'val': '1'});
+    });
+    d3.select("#" + k.replace(':', '-') + "_set_off").on('click', function() {
+        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'window', 'val': '0'});
     });
 }
 
@@ -269,6 +307,9 @@ var display_node = function(id, node) {
         if (k == 'a:led') {
             snip_a_led(view, k, node.devs[k]);
         }
+        if (k == 'a:window') {
+            snip_a_window(view, k, node.devs[k]);
+        }
         else if (k == 'a:rgb') {
             snip_a_rgb(view, k, node.devs[k]);
         }
@@ -291,7 +332,7 @@ var update_node_view = function(id, node) {
         d3.select("#" + k.replace(':', '-') + 'update').html(time);
         d3.select("#" + k.replace(':', '-') + 'val').html(vals);
 
-        if ((k != 'a:led') && (k != 'a:rgb')) {
+        if ((k != 'a:led') && (k != 'a:rgb') && k != 'a:window') {
             update_chart(k, dev);
         }
     }
