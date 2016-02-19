@@ -247,13 +247,11 @@ int main(void)
 #endif
 
     eui64_t iid;
-    // uint16_t chan = 15;
     netopt_enable_t acks = NETOPT_DISABLE;
     kernel_pid_t ifs[GNRC_NETIF_NUMOF];
 
     gnrc_netif_get(ifs);
     gnrc_netapi_set(ifs[0], NETOPT_AUTOACK, 0, &acks, sizeof(acks));
-    // gnrc_netapi_set(ifs[0], NETOPT_CHANNEL, 0, &chan, sizeof(chan));
     ipv6_addr_from_str(&dst_addr, "2001:affe:1234::1");
     // ipv6_addr_from_str(&dst_addr, "fd38:3734:ad48:0:211d:50ce:a189:7cc4");
 

@@ -30,7 +30,7 @@ USEMODULE += mag3110
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:
-CFLAGS += -DDEVELHELP
+CFLAGS += -DDEVELHELP -DKW2XRF_DEFAULT_CHANNEL=26
 ifeq (1, $(WITH_SHELL))
 CFLAGS += -DWITH_SHELL
 endif
