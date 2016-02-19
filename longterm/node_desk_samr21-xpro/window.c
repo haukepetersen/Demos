@@ -29,9 +29,9 @@ int initWindow(servo_t *servo) {
 
 
 void openWindow(servo_t *servo){
-    servo_set(servo, STEP_UPPER_BOUND);
+    servo_set(servo,STEP_LOWER_BOUND);
 }
 
 void closeWindow(servo_t *servo) {
-    servo_set(servo,STEP_LOWER_BOUND);
+    servo_set(servo, STEP_UPPER_BOUND);
 }

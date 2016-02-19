@@ -93,7 +93,7 @@ static int handle_post_window(coap_rw_buffer_t *scratch,
         window_post = 1;
         printf("Window open: %c\n", (char)val);
     }
-    if ((inpkt->payload.len == 1) && (val == '0')) {
+    else if ((inpkt->payload.len == 1) && (val == '0')) {
         closeWindow(&servo);
         window_post = 0;
         printf("Window close: %c\n", (char)val);
@@ -185,7 +185,7 @@ static void send_coap_post(uint8_t *data, size_t len)
 
 static void send_update(size_t pos, char *buf)
 {
-    pos += sprintf(&buf[pos], "{\"n\":\"a:window\", \"u\":\"bool\", \"v\":\"%d\"}]",
+    pos += sprintf(&buf[pos], "{\"n\":\"a:window\", \"u\":\"bool\", \"v\":\"%i\"}]",
                    window_post);
 
     send_coap_post((uint8_t *)buf, pos);

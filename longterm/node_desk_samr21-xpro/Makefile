@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = node_desk_pba-d-01-kw2x
+APPLICATION = node_desk_samr21-xpro
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= samr21-xpro
