@@ -185,6 +185,8 @@ int main(void)
     msg_init_queue(_main_msg_q, Q_SZ);
 #endif
 
+    ipv6_addr_t ll_linux;
+    uint8_t l2_linux[8] = { 0xff, 0xfe, 0x02, 0x98, 0xa4, 0x6d, 0x25, 0x01 };
     eui64_t iid;
     netopt_enable_t acks = NETOPT_DISABLE;
     kernel_pid_t ifs[GNRC_NETIF_NUMOF];
@@ -210,6 +212,10 @@ int main(void)
     mpl3115a2_set_active(&p_dev);
     tcs37727_init(&light_dev, TCS37727_I2C, TCS37727_ADDR, TCS37727_ATIME_DEFAULT);
     tcs37727_set_rgbc_active(&light_dev);
+
+    /* add linux as unmanaged */
+    ipv6_addr_from_str(&ll_linux, "fe80::fdfe:298:a46d:2501");
+    gnrc_ipv6_nc_add(ifs[0], &ll_linux, l2_linux, sizeof(l2_linux)/sizeof(l2_linux[0]), 0x8);
 
 #ifdef WITH_SHELL
     thread_create(beac_stack, sizeof(beac_stack), PRIO, THREAD_CREATE_STACKTEST, beaconing,
