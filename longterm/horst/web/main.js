@@ -204,10 +204,12 @@ var snip_a_rgb = function(parent, k, dev) {
 
     parent.html(c);
 
-    new jscolor(document.getElementById(k.replace(':', '-') + '_rgb'), {})
-    d3.select("#" + k.replace(':', '-') + "_rgb").on('change', function() {
-        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'rgb',
-                    'val': '#' + this.value});
+    $("#" + (k.replace(':', '-') + "_rgb")).spectrum({
+        'flat' : true,
+        'move': function(color) {
+            socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'rgb',
+                        'val': color.toHexString()});
+        },
     });
 }
 
