@@ -55,8 +55,8 @@ var chart_opts = {
     's:hum':    {'maxValue': 100, 'minValue': 0, 'millisPerPixel': 30},
     's:light':  {'maxValue': 1500, 'minValue': 0, 'millisPerPixel': 30},
     's:rgb':    {'maxValue': 256, 'minValue': 0, 'millisPerPixel': 30},
-    's:acc':    {'maxValue': 4000, 'minValue': -4000, 'millisPerPixel': 15},
-    's:mag':    {'maxValue': 500, 'minValue': -500, 'millisPerPixel': 15},
+    's:acc':    {'maxValue': 2000, 'minValue': -2000, 'millisPerPixel': 15},
+    's:mag':    {'maxValue': 2000, 'minValue': -2000, 'millisPerPixel': 15},
     's:gyro':   {'maxValue': 2500, 'minValue': -2500, 'millisPerPixel': 15},
     'a:rgb':    {'maxValue': 256, 'minValue': 0, 'millisPerPixel': 30},
     'a:led':    {'maxValue': 1, 'minValue': 0, 'millisPerPixel': 30},
@@ -309,7 +309,7 @@ var display_node = function(id, node) {
         if (k == 'a:led') {
             snip_a_led(view, k, node.devs[k]);
         }
-        if (k == 'a:window') {
+        else if (k == 'a:window') {
             snip_a_window(view, k, node.devs[k]);
         }
         else if (k == 'a:rgb') {
@@ -334,7 +334,7 @@ var update_node_view = function(id, node) {
         d3.select("#" + k.replace(':', '-') + 'update').html(time);
         d3.select("#" + k.replace(':', '-') + 'val').html(vals);
 
-        if ((k != 'a:led') && (k != 'a:rgb') && k != 'a:window') {
+        if ((k != 'a:led') && (k != 'a:rgb') && (k != 'a:window')) {
             update_chart(k, dev);
         }
     }

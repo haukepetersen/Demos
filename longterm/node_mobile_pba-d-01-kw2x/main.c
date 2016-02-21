@@ -187,9 +187,9 @@ static void send_update(size_t pos, char *buf)
 
     pos += sprintf(&buf[pos], "{\"n\":\"a:led\", \"u\":\"bool\", \"v\":\"%c\"},",
                    led);
-    pos += sprintf(&buf[pos], "{\"n\":\"s:acc\", \"u\":\"g\", \"v\":\"[%d, %d, %d]\"},",
+    pos += sprintf(&buf[pos], "{\"n\":\"s:acc\", \"u\":\"g\", \"v\":[%d, %d, %d]},",
                    tri_x, tri_y, tri_z);
-    pos += sprintf(&buf[pos], "{\"n\":\"s:mag\", \"u\":\"uT\", \"v\":\"[%d, %d, %d]\"}]",
+    pos += sprintf(&buf[pos], "{\"n\":\"s:mag\", \"u\":\"uT\", \"v\":[%d, %d, %d]}]",
                    mag_x, mag_y, mag_z);
     send_coap_post((uint8_t *)buf, pos);
 }
