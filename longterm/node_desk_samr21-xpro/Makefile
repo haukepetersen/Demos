@@ -15,7 +15,7 @@ USEMODULE += gnrc_netif_default
 USEMODULE += auto_init_gnrc_netif
 # Specify the mandatory networking modules for IPv6 and UDP
 USEMODULE += gnrc_ipv6_router_default
-#USEMODULE += gnrc_sixlowpan_iphc_nhc
+USEMODULE += gnrc_sixlowpan_iphc_nhc
 USEMODULE += gnrc_udp
 USEMODULE += gnrc_conn_udp
 ifeq (1, $(WITH_SHELL))
