@@ -213,7 +213,28 @@ void *beaconing(void *arg)
 }
 
 #ifdef WITH_SHELL
-static const shell_command_t shell_commands[] = { { NULL, NULL, NULL } };
+static int cmd_col(int argc, char **argv)
+{
+    color_rgb_t col;
+
+    if (argc < 4) {
+        printf("usage: %s <r> <g> <b>\n", argv[0]);
+        return 1;
+    }
+
+    col.r = (uint8_t)atoi(argv[1]);
+    col.g = (uint8_t)atoi(argv[2]);
+    col.b = (uint8_t)atoi(argv[3]);
+
+    rgbled_set(&led, &col);
+
+    return 0;
+}
+
+static const shell_command_t shell_commands[] = {
+    { "col", "dumbum", cmd_col },
+    { NULL, NULL, NULL }
+};
 #endif
 
 int main(void)
@@ -241,7 +262,7 @@ int main(void)
                            iid.uint8[4], iid.uint8[5], iid.uint8[6], iid.uint8[7]);
     initial_pos += sprintf(&p_buf[initial_pos], "\"},");
 
-    rgbled_init(&led, PWM_1, 16, 18, 19);
+    rgbled_init(&led, PWM_1, 2, 0, 1);
 
     thread_create(coap_stack, sizeof(coap_stack), PRIO - 1, THREAD_CREATE_STACKTEST, microcoap_server,
                   NULL, "coap");
