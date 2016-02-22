@@ -37,6 +37,7 @@
 #include "coap.h"
 #include "periph/gpio.h"
 #include "color.h"
+#include "rgbled.h"
 
 #define UPDATE_INTERVAL     (1000 * 1000U)
 #define MSG_UPDATE_EVENT    (0x3338)
@@ -60,6 +61,7 @@ static uint8_t scratch_raw[1024];      /* microcoap scratch buffer */
 static coap_rw_buffer_t scratch_buf = { scratch_raw, sizeof(scratch_raw) };
 static ipv6_addr_t dst_addr;
 static color_rgb_t rgb;
+static rgbled_t led;
 
 /* buffer for composing SemML messages in */
 static char p_buf[512];
@@ -84,6 +86,7 @@ static int handle_post_rgb(coap_rw_buffer_t *scratch,
 
     if (str[0] == '#') {
         color_str2rgb(&str[1], &rgb);
+        rgbled_set(&led, &rgb);
     }
 
     return coap_make_response(scratch, outpkt, NULL, 0,
@@ -237,6 +240,8 @@ int main(void)
                            iid.uint8[0], iid.uint8[1], iid.uint8[2], iid.uint8[3],
                            iid.uint8[4], iid.uint8[5], iid.uint8[6], iid.uint8[7]);
     initial_pos += sprintf(&p_buf[initial_pos], "\"},");
+
+    rgbled_init(&led, PWM_1, 16, 18, 19);
 
     thread_create(coap_stack, sizeof(coap_stack), PRIO - 1, THREAD_CREATE_STACKTEST, microcoap_server,
                   NULL, "coap");
