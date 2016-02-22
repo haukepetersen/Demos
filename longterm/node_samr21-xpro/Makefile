@@ -18,13 +18,14 @@ USEMODULE += gnrc_ipv6_router_default
 USEMODULE += gnrc_sixlowpan_iphc_nhc
 USEMODULE += gnrc_udp
 USEMODULE += gnrc_conn_udp
+USEMODULE += color
+USEMODULE += rgbled
 ifeq (1, $(WITH_SHELL))
 USEMODULE += gnrc_icmpv6_echo
 USEMODULE += shell
 USEMODULE += shell_commands
 endif
 # Add the sensors
-USEMODULE += color
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the

@@ -37,6 +37,7 @@
 #include "coap.h"
 #include "periph/gpio.h"
 #include "color.h"
+#include "rgbled.h"
 
 #define UPDATE_INTERVAL     (1000 * 1000U)
 #define MSG_UPDATE_EVENT    (0x3338)
@@ -59,7 +60,8 @@ static uint8_t udp_buf[512];
 static uint8_t scratch_raw[1024];      /* microcoap scratch buffer */
 static coap_rw_buffer_t scratch_buf = { scratch_raw, sizeof(scratch_raw) };
 static ipv6_addr_t dst_addr;
-static uint32_t hex_rgb;
+static color_rgb_t rgb;
+static rgbled_t led;
 
 /* buffer for composing SemML messages in */
 static char p_buf[512];
@@ -80,16 +82,12 @@ static int handle_post_rgb(coap_rw_buffer_t *scratch,
                            uint8_t id_hi, uint8_t id_lo)
 {
     coap_responsecode_t resp = COAP_RSPCODE_CHANGED;
-	const char *str = (const char *) inpkt->payload.p;
+    const char *str = (const char *) inpkt->payload.p;
 
-	if (str[0] == '#') {
-		hex_rgb = (((str[1] > '9') ? (str[1] &~ 0x20) - 'A' + 10 : (str[1] - '0')) << 20) | // R
-				  (((str[2] > '9') ? (str[2] &~ 0x20) - 'A' + 10 : (str[2] - '0')) << 16) | // R
-				  (((str[3] > '9') ? (str[3] &~ 0x20) - 'A' + 10 : (str[3] - '0')) << 12) | // G
-				  (((str[4] > '9') ? (str[4] &~ 0x20) - 'A' + 10 : (str[4] - '0')) <<  8) | // G
-				  (((str[5] > '9') ? (str[5] &~ 0x20) - 'A' + 10 : (str[5] - '0')) <<  4) | // B
-				  (((str[6] > '9') ? (str[6] &~ 0x20) - 'A' + 10 : (str[6] - '0')) <<  0) ; // B
-	}
+    if (str[0] == '#') {
+        color_str2rgb(&str[1], &rgb);
+        rgbled_set(&led, &rgb);
+    }
 
     return coap_make_response(scratch, outpkt, NULL, 0,
                               id_hi, id_lo, &inpkt->token, resp,
@@ -173,6 +171,9 @@ static void send_coap_post(uint8_t *data, size_t len)
 
 static void send_update(size_t pos, char *buf)
 {
+    uint32_t hex_rgb = 0x0;
+    color_rgb2hex(&rgb, &hex_rgb);
+
     pos += sprintf(&buf[pos], "{\"n\":\"a:rgb\", \"u\":\"rgb[#hex]\", \"v\":\"#%"PRIx32"\"}]",
                    hex_rgb);
 
@@ -212,7 +213,28 @@ void *beaconing(void *arg)
 }
 
 #ifdef WITH_SHELL
-static const shell_command_t shell_commands[] = { { NULL, NULL, NULL } };
+static int cmd_col(int argc, char **argv)
+{
+    color_rgb_t col;
+
+    if (argc < 4) {
+        printf("usage: %s <r> <g> <b>\n", argv[0]);
+        return 1;
+    }
+
+    col.r = (uint8_t)atoi(argv[1]);
+    col.g = (uint8_t)atoi(argv[2]);
+    col.b = (uint8_t)atoi(argv[3]);
+
+    rgbled_set(&led, &col);
+
+    return 0;
+}
+
+static const shell_command_t shell_commands[] = {
+    { "col", "dumbum", cmd_col },
+    { NULL, NULL, NULL }
+};
 #endif
 
 int main(void)
@@ -239,6 +261,8 @@ int main(void)
                            iid.uint8[0], iid.uint8[1], iid.uint8[2], iid.uint8[3],
                            iid.uint8[4], iid.uint8[5], iid.uint8[6], iid.uint8[7]);
     initial_pos += sprintf(&p_buf[initial_pos], "\"},");
+
+    rgbled_init(&led, PWM_1, 2, 0, 1);
 
     thread_create(coap_stack, sizeof(coap_stack), PRIO - 1, THREAD_CREATE_STACKTEST, microcoap_server,
                   NULL, "coap");

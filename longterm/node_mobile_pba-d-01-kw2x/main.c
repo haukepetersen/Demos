@@ -40,9 +40,12 @@
 #include "mag3110.h"
 
 #define UPDATE_INTERVAL     (1000 * 1000U)
+#define EVT_REPEAT_DELAY    (1000)
+#define DEBOUNCE_TIME       (50 * 1000)
 
 #define EVT_REPEAT          (2)
 #define MSG_UPDATE_EVENT    (0x3338)
+#define MSG_BUTTON_EVENT    (0x3339)
 
 #define Q_SZ                (4)
 #define PRIO                (THREAD_PRIORITY_MAIN - 1)
@@ -62,6 +65,11 @@ static uint8_t udp_buf[512];
 static uint8_t scratch_raw[1024];      /* microcoap scratch buffer */
 static coap_rw_buffer_t scratch_buf = { scratch_raw, sizeof(scratch_raw) };
 static ipv6_addr_t dst_addr;
+static kernel_pid_t ifs[GNRC_NETIF_NUMOF];
+static ipv6_addr_t ll_linux;
+static uint8_t l2_linux[8] = { 0xff, 0xfe, 0x02, 0x98, 0xa4, 0x6d, 0x25, 0x01 };
+
+static xtimer_t debounce_timer;
 
 /* buffer for composing SemML messages in */
 static char p_buf[512];
@@ -176,20 +184,48 @@ void send_coap_post(uint8_t *data, size_t len)
                     AF_INET6, SPORT, UDP_PORT);
 }
 
+static void btn_debounce_evt(void *arg)
+{
+    (void)arg;
+    gpio_irq_enable(BUTTON_GPIO);
+}
+
+static void btn_evt(void *arg)
+{
+    msg_t m = { .type = MSG_BUTTON_EVENT };
+    gpio_irq_disable(BUTTON_GPIO);
+    xtimer_set(&debounce_timer, DEBOUNCE_TIME);
+    msg_send(&m, *((kernel_pid_t *)arg));
+}
+
+static void send_btn_evt(size_t pos, char *buf)
+{
+    char btn = (gpio_read(BUTTON_GPIO)) ? '0' : '1';
+
+    pos += sprintf(&buf[pos], "{\"n\":\"s:btn\", \"u\":\"bool\", \"v\":\"%c\"}]",
+                   btn);
+
+    for (int i = 0; i < EVT_REPEAT; i++) {
+        send_coap_post((uint8_t *)buf, pos);
+        xtimer_usleep(EVT_REPEAT_DELAY);
+    }
+}
+
 static void send_update(size_t pos, char *buf)
 {
     char led = (gpio_read(LED_R_GPIO)) ? '0' : '1';
+    char btn = (gpio_read(BUTTON_GPIO)) ? '0' : '1';
     int16_t tri_x, tri_y, tri_z, mag_x, mag_y, mag_z;
     uint8_t tri_status, mag_status;
 
     mma8652_read(&tri_dev, &tri_x, &tri_y, &tri_z, &tri_status);
     mag3110_read(&mag_dev, &mag_x, &mag_y, &mag_z, &mag_status);
 
-    pos += sprintf(&buf[pos], "{\"n\":\"a:led\", \"u\":\"bool\", \"v\":\"%c\"},",
-                   led);
-    pos += sprintf(&buf[pos], "{\"n\":\"s:acc\", \"u\":\"g\", \"v\":\"[%d, %d, %d]\"},",
+    pos += sprintf(&buf[pos], "{\"n\":\"a:led\", \"u\":\"bool\", \"v\":\"%c\"},", led);
+    pos += sprintf(&buf[pos], "{\"n\":\"s:btn\", \"u\":\"bool\", \"v\":\"%c\"},", btn);
+    pos += sprintf(&buf[pos], "{\"n\":\"s:acc\", \"u\":\"g\", \"v\":[%d, %d, %d]},",
                    tri_x, tri_y, tri_z);
-    pos += sprintf(&buf[pos], "{\"n\":\"s:mag\", \"u\":\"uT\", \"v\":\"[%d, %d, %d]\"}]",
+    pos += sprintf(&buf[pos], "{\"n\":\"s:mag\", \"u\":\"uT\", \"v\":[%d, %d, %d]}]",
                    mag_x, mag_y, mag_z);
     send_coap_post((uint8_t *)buf, pos);
 }
@@ -209,13 +245,24 @@ void *beaconing(void *arg)
     update_msg.type = MSG_UPDATE_EVENT;
     xtimer_set_msg(&status_timer, UPDATE_INTERVAL, &update_msg, mypid);
 
+    /* register button event */
+    debounce_timer.callback = btn_debounce_evt;
+    gpio_init_int(BUTTON_GPIO, GPIO_PULLUP, GPIO_BOTH, btn_evt, &mypid);
+
     while(1) {
         msg_receive(&msg);
+
+        /* add linux as unmanaged */
+        ipv6_addr_from_str(&ll_linux, "fe80::fdfe:298:a46d:2501");
+        gnrc_ipv6_nc_add(ifs[0], &ll_linux, l2_linux, sizeof(l2_linux)/sizeof(l2_linux[0]), 0x8);
 
         switch (msg.type) {
             case MSG_UPDATE_EVENT:
                 xtimer_set_msg(&status_timer, UPDATE_INTERVAL, &update_msg, mypid);
                 send_update(initial_pos, p_buf);
+                break;
+            case MSG_BUTTON_EVENT:
+                send_btn_evt(initial_pos, p_buf);
                 break;
             default:
                 break;
@@ -239,7 +286,6 @@ int main(void)
 
     eui64_t iid;
     netopt_enable_t acks = NETOPT_DISABLE;
-    kernel_pid_t ifs[GNRC_NETIF_NUMOF];
 
     gnrc_netif_get(ifs);
     gnrc_netapi_set(ifs[0], NETOPT_AUTOACK, 0, &acks, sizeof(acks));

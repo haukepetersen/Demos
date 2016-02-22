@@ -58,6 +58,9 @@ static msg_t _main_msg_q[Q_SZ];
 static char beac_stack[THREAD_STACKSIZE_DEFAULT];
 #endif
 static msg_t _beac_msg_q[Q_SZ];
+static kernel_pid_t ifs[GNRC_NETIF_NUMOF];
+static ipv6_addr_t ll_linux;
+static uint8_t l2_linux[8] = { 0xff, 0xfe, 0x02, 0x98, 0xa4, 0x6d, 0x25, 0x01 };
 
 static hdc1000_t th_dev;
 static mpl3115a2_t p_dev;
@@ -160,6 +163,10 @@ void *beaconing(void *arg)
     while(1) {
         msg_receive(&msg);
 
+        /* add linux as unmanaged */
+        ipv6_addr_from_str(&ll_linux, "fe80::fdfe:298:a46d:2501");
+        gnrc_ipv6_nc_add(ifs[0], &ll_linux, l2_linux, sizeof(l2_linux)/sizeof(l2_linux[0]), 0x8);
+
         switch (msg.type) {
             case MSG_UPDATE_EVENT:
                 xtimer_set_msg(&status_timer, UPDATE_INTERVAL, &update_msg, mypid);
@@ -187,7 +194,6 @@ int main(void)
 
     eui64_t iid;
     netopt_enable_t acks = NETOPT_DISABLE;
-    kernel_pid_t ifs[GNRC_NETIF_NUMOF];
 
     gnrc_netif_get(ifs);
     gnrc_netapi_set(ifs[0], NETOPT_AUTOACK, 0, &acks, sizeof(acks));
