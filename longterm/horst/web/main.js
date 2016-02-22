@@ -48,6 +48,8 @@ var nodes = {};
 var charts = {};
 var active_node = undefined;
 
+var last_speed = 0;
+
 var chart_opts = {
     's:temp':   {'maxValue': 40, 'minValue': 20, 'millisPerPixel': 30},
     's:hum':    {'maxValue': 100, 'minValue': 0, 'millisPerPixel': 30},
@@ -102,6 +104,77 @@ var snip_infobox = function(id, node) {
     c +=    '</div>';
 
     return c;
+};
+
+var snip_a_car = function(parent, k, dev) {
+    var time = new Date(dev.time[0]).toLocaleTimeString();
+    var vals = val_toString(dev.vals[0]);
+
+    var c = '';
+    c +=    '<div class="row">';
+    c +=      '<div class="col">';
+    c +=        '<span class="k">Type:</span>';
+    c +=        '<span class="v">' + k + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Unit:</span>';
+    c +=        '<span class="v">' + dev.unit + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Last Update:</span>';
+    c +=        '<span id="' + k.replace(':', '-') + 'update" class="v">' + time + '</span>';
+    c +=      '</div>';
+    c +=    '</div>';
+    c +=    '<div id="behave_header" class="row">Programmed behavior:</div>';
+
+    c +=    '<div class="row">';
+    for (var i = 0; i < 4; i++) {
+        var ent = (i == dev.vals[0]) ? 'act' : 'pass';
+        c +=    '<div id="acar_b' + i + '" class="carbtn ' + ent + '"></div>';
+    }
+    c +=    '</div>';
+    c +=    '<div class="row"></div>';
+    parent.html(c);
+
+    d3.select("#acar_b0").on('click', function() {
+        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'behave', 'val': '0'});
+    });
+    d3.select("#acar_b1").on('click', function() {
+        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'behave', 'val': '1'});
+    });
+    d3.select("#acar_b2").on('click', function() {
+        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'behave', 'val': '2'});
+    });
+    d3.select("#acar_b3").on('click', function() {
+        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'behave', 'val': '3'});
+    });
+};
+
+var snip_s_car = function(parent, k, dev) {
+    var time = new Date(dev.time[0]).toLocaleTimeString();
+    var vals = val_toString(dev.vals[0]);
+
+    var c = '';
+    c +=    '<div class="row">';
+    c +=      '<div class="col">';
+    c +=        '<span class="k">Type:</span>';
+    c +=        '<span class="v">' + k + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Unit:</span>';
+    c +=        '<span class="v">' + dev.unit + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Last Update:</span>';
+    c +=        '<span id="' + k.replace(':', '-') + 'update" class="v">' + time + '</span>';
+    c +=      '</div>';
+    c +=    '</div>';
+    c +=    '<div class="row">';
+    c +=    '  <div id="scar_speed" class="stop"></div>';
+    c +=    '  <div id="scar_block">';
+    c +=    '    <div id="scar_block_f" class="free"></div>';
+    c +=    '    <div id="scar_block_icon"></div>';
+    c +=    '    <div id="scar_block_b" class="blocked"></div>';
+    c +=    '  </div>';
+    c +=    '</div>';
+    c +=    '<div class="row"></div>';
+    parent.html(c);
 };
 
 var snip_a_led = function(parent, k, dev) {
@@ -269,8 +342,14 @@ var display_node = function(id, node) {
         if (k == 'a:led') {
             snip_a_led(view, k, node.devs[k]);
         }
+        else if (k == 'a:car') {
+            snip_a_car(view, k, node.devs[k]);
+        }
         else if (k == 'a:rgb') {
             snip_a_rgb(view, k, node.devs[k]);
+        }
+        else if (k == 's:car') {
+            snip_s_car(view, k, node.devs[k]);
         }
         else {
             snip_graph(view, k, node.devs[k]);
@@ -291,7 +370,16 @@ var update_node_view = function(id, node) {
         d3.select("#" + k.replace(':', '-') + 'update').html(time);
         d3.select("#" + k.replace(':', '-') + 'val').html(vals);
 
-        if ((k != 'a:led') && (k != 'a:rgb')) {
+        if ((k == 'a:led') || (k == 'a:rgb')) {
+            /* nothing to do yet */
+        }
+        else if (k == 'a:car') {
+            update_acar(k, dev);
+        }
+        else if (k == 's:car') {
+            update_scar(k, dev);
+        }
+        else {
             update_chart(k, dev);
         }
     }
@@ -324,6 +412,50 @@ var add_chart = function(k, dev) {
         for (var s = dev.time.length - 1; s >= 0; s--) {
             charts[k].data[0].append(dev.time[s], dev.vals[s]);
         }
+    }
+}
+
+var update_acar = function(k, dev) {
+    for (var i = 0; i < 4; i++) {
+        var id = '#acar_b' + i;
+        if (dev.vals[0] == i) {
+            d3.select(id).attr('class', "carbtn act");
+        }
+        else {
+            d3.select(id).attr('class', "carbtn pass");
+        }
+    }
+    d3.select("#acar")
+}
+
+var update_scar = function(k, dev) {
+    if (dev.vals[0][0] == 0) {
+        d3.select("#scar_speed").attr("class", "stop");
+    }
+    else if (dev.vals[0][0] < 0) {
+        d3.select("#scar_speed").attr("class", "bw");
+    }
+    else {
+        d3.select("#scar_speed").attr("class", "fw");
+    }
+
+    if (dev.vals[0][2] == 1) {
+        d3.select("#scar_block_f").attr("class", "blocked");
+    }
+    else {
+        d3.select("#scar_block_f").attr("class", "free");
+    }
+    if (dev.vals[0][3] == 1) {
+        d3.select("#scar_block_b").attr("class", "blocked");
+    }
+    else {
+        d3.select("#scar_block_b").attr("class", "free");
+    }
+
+    if (last_speed != dev.vals[0][0]) {
+        last_speed = dev.vals[0][0];
+        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'disco', 'val': '1'});
+        console.log("disco");
     }
 }
 

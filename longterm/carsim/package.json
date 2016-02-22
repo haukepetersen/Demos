@@ -1,16 +1,13 @@
 {
-  "name": "Horst",
+  "name": "carSim",
   "version": "0.1.0",
-  "description": "CoAP web adapter",
-  "main": "horst.js",
+  "description": "Simulate the RIOT Car",
+  "main": "carSim.js",
   "repository": "",
   "author": "Hauke Petersen <hauke.petersen@fu-berlin.de",
   "license": "GPLv2",
   "readmeFilename": "README.md",
   "dependencies": {
-    "express": "*",
-    "socket.io": ">1.0",
-    "coap": "*",
-    "joystick": "*"
+    "coap": "*"
   }
 }

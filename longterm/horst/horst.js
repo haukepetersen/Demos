@@ -36,6 +36,12 @@ const STALE_TIME    = 2000;     /* time until a node gets stale [in ms] */
 
 const DATA_HISTORY  = 50;      /* save this amount of datapoints per device */
 
+const JS_FW         = 5;
+const JS_BW         = 2;
+const JS_STEER      = 0;
+const JS_BTN_DISCO  = 0;
+const JS_INTERVAL   = 100;
+
 /**
  * Load Node packages and initialize global variables
  */
@@ -45,11 +51,29 @@ var exp_app         = require('express')();
 var web_server      = require('http').createServer(exp_app);
 var web_sock        = require('socket.io')(web_server);
 var fs              = require('fs');
+var joystick        = new (require('joystick'))(0, 3500, 350);
+
+/**
+ * Also hold the current joystick control data
+ */
+var js_speed = 0;
+var js_steer = 0;
+var ctrl_int = undefined;
 
 /**
  * This object holds known and previously known devices
  */
 var nodes = {};
+
+var update_behavior = function(bh) {
+    if (ctrl_int != undefined) {
+        clearInterval(ctrl_int);
+    }
+    if (bh == '3') {
+        console.log("Going into manual control mode");
+        ctrl_int = setInterval(send_ctrl, JS_INTERVAL);
+    }
+}
 
 var db_update_senml = function(data, src_ip){
     /* check data */
@@ -173,6 +197,15 @@ coap_server.on('request', function(req, res) {
     }
 });
 
+var coap_post = function(addr, ep, data) {
+    console.log("send something to coap server", addr, ep, data);
+    var req = coap.request({'host': addr,
+                            'method': 'POST',
+                            'pathname': "/" + ep,
+                            'confirmable': false});
+    req.end(data);
+}
+
 /**
  * Setup routes for the web server
  */
@@ -205,16 +238,10 @@ web_sock.on('connection', function(socket) {
         console.log('disconnected ', socket.id);
     });
     socket.on('coap_send', function(ctx) {
-        console.log("send something to coap server", ctx);
-        console.log('send to', ctx.addr, ctx.ep);
-        var req = coap.request({'host': ctx.addr,
-                                'method': 'POST',
-                                'pathname': "/" + ctx.ep,
-                                'confirmable': false});
-        // req.on('response', function(bla) {
-        //     console.log('got response');
-        // });
-        req.end(ctx.val);
+        if (ctx.ep == 'behave') {
+            update_behavior(ctx.val);
+        }
+        coap_post(ctx.addr, ctx.ep, ctx.val);
     });
 
     socket.emit('init', nodes);
@@ -228,4 +255,49 @@ coap_server.listen(COAP_PORT, function() {
 })
 web_server.listen(WEB_PORT, function() {
     console.log("Web server running at http://[::1]:" + WEB_PORT);
+});
+
+var send_ctrl = function() {
+    var val = new Buffer(4);
+    val[1] = (js_speed & 0xff);
+    val[0] = ((js_speed >> 8) & 0xff);
+    val[3] = (js_steer & 0xff);
+    val[2] = ((js_steer >> 8) & 0xff);
+    coap_post(nodes[Object.keys(nodes)[0]].ip, 'ctrl', val);
+};
+
+joystick.on('axis', function(ctx) {
+    if (ctx.init == true) {
+        return;
+    }
+    if (ctx.number == JS_STEER) {
+        js_steer = (ctx.value >> 5);
+        if (js_steer < 0) {
+            js_steer += 10;
+        }
+        else {
+            js_steer -= 10;
+        }
+        console.log('steer', js_steer);
+    }
+    if (ctx.number == JS_BW) {
+        js_speed = Math.round(-(ctx.value + 32767) / 90);
+        console.log('speed', js_speed);
+    }
+    if (ctx.number == JS_FW) {
+        js_speed = Math.round((ctx.value + 32767) / 90);
+        console.log('speed', js_speed);
+    }
+});
+
+joystick.on('button', function(btn) {
+    if (btn.init == true) {
+        console.log('btn init');
+        return;
+    }
+
+    if ((btn.number == JS_BTN_DISCO)) {
+        console.log("DISCO TIME");
+        coap_post(nodes[Object.keys(nodes)[0]].ip, 'disco', '1');
+    }
 });

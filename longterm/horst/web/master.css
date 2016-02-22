@@ -25,7 +25,6 @@
     src: url("miso-light.otf") format("opentype");
 }
 
-
 body {
     width: 800px;
     margin: 0;
@@ -118,6 +117,7 @@ body {
 #nodeview .row {
     padding: 2px;
     clear: both;
+    width: 100%;
 }
 
 #nodeview .row > .col {
@@ -132,3 +132,116 @@ body {
     float:left;
     text-align: right;
 }
+
+#scar_speed {
+    display: block;
+    float:left;
+    margin-left: 50px;
+    margin-top: 30px;
+    width: 120px;
+    height: 120px;
+    background-size: 120px;
+    background-repeat: no-repeat;
+    background-position: top;
+}
+
+#scar_speed.stop {
+    background-image: url('sym_stop.png');
+}
+
+#scar_speed.fw {
+    background-image: url('sym_fw.png');
+}
+
+#scar_speed.bw {
+    background-image: url('sym_bw.png');
+}
+
+
+
+#scar_block {
+    display: block;
+    float: right;
+    margin-right: 50px;
+    width: 150px;
+}
+
+#scar_block_icon {
+    height:130px;
+    background-image: url('sym_car.png');
+    background-size: 130px;
+    background-repeat: no-repeat;
+    background-position: top;
+    margin: 10px 0;
+}
+
+#scar_block_f, #scar_block_b {
+    height: 20px;
+    border-radius: 5px;
+}
+
+#scar_block_f.free, #scar_block_b.free {
+    background-color: #3fa687;
+}
+#scar_block_f.blocked, #scar_block_b.blocked {
+    background-color: #bc1a29;
+}
+
+
+#behave_header {
+    display: block;
+    float: left;
+    width: 200px;
+    margin-top: 20px;
+    font-weight: bold;
+    font-family: miso;
+    font-size: 16px;
+    color: #ffffff;
+    text-align: center;
+}
+
+.carbtn {
+    display: block;
+    width: 90px;
+    height: 90px;
+    border: 2px solid #0e0e0e;
+    margin: 10px 10px;
+    float: left;
+    background-repeat: no-repeat;
+    background-position: top;
+    background-size: 90px;
+}
+
+.carbtn:hover {
+    border-color: #3fa687;
+    cursor: pointer;
+}
+
+#acar_b0.act {
+    background-image: url('sym_b1a.png');
+}
+#acar_b0.pass {
+    background-image: url('sym_b1p.png');
+}
+
+#acar_b1.act {
+    background-image: url('sym_b2a.png');
+}
+#acar_b1.pass {
+    background-image: url('sym_b2p.png');
+}
+
+#acar_b2.act {
+    background-image: url('sym_b3a.png');
+}
+#acar_b2.pass {
+    background-image: url('sym_b3p.png');
+}
+
+#acar_b3.act {
+    background-image: url('sym_man_a.png');
+}
+#acar_b3.pass {
+    background-image: url('sym_man_p.png');
+}
+
