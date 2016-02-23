@@ -67,7 +67,7 @@ static coap_rw_buffer_t scratch_buf = { scratch_raw, sizeof(scratch_raw) };
 static ipv6_addr_t dst_addr;
 static kernel_pid_t ifs[GNRC_NETIF_NUMOF];
 static ipv6_addr_t ll_linux;
-static uint8_t l2_linux[8] = { 0xff, 0xfe, 0x02, 0x98, 0xa4, 0x6d, 0x25, 0x01 };
+static uint8_t l2_linux[8] = { 0xff, 0xfe, 0x02, 0x88, 0xe0, 0xb4, 0x15, 0x53 };
 
 static xtimer_t debounce_timer;
 
@@ -253,7 +253,7 @@ void *beaconing(void *arg)
         msg_receive(&msg);
 
         /* add linux as unmanaged */
-        ipv6_addr_from_str(&ll_linux, "fe80::fdfe:298:a46d:2501");
+        ipv6_addr_from_str(&ll_linux, "fe80::fdfe:288:e0b4:1553");
         gnrc_ipv6_nc_add(ifs[0], &ll_linux, l2_linux, sizeof(l2_linux)/sizeof(l2_linux[0]), 0x8);
 
         switch (msg.type) {
