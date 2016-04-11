@@ -26,7 +26,6 @@
 #include <net/af.h>
 
 #include "board.h"
-#include "kernel.h"
 #include "shell.h"
 #include "xtimer.h"
 #include "net/gnrc.h"
@@ -90,7 +89,7 @@ static int handle_post_led(coap_rw_buffer_t *scratch,
     uint8_t val = inpkt->payload.p[0];
 
     if ((inpkt->payload.len == 1) && ((val == '1') || (val == '0'))) {
-        gpio_write(LED_RED_GPIO, (val - '1'));
+        gpio_write(LED0_PIN, (val - '1'));
     }
     else {
         resp = COAP_RSPCODE_NOT_ACCEPTABLE;
@@ -179,7 +178,7 @@ void send_coap_post(uint8_t *data, size_t len)
 
 static void send_update(size_t pos, char *buf)
 {
-    char led = (gpio_read(LED_RED_GPIO)) ? '0' : '1';
+    char led = (gpio_read(LED0_PIN)) ? '0' : '1';
     int lux, pres, pres_abs, temp, temp_abs;
 
     lux = isl29020_read(&light_dev);
@@ -268,9 +267,9 @@ int main(void)
     isl29020_init(&light_dev, ISL29020_I2C, ISL29020_ADDR, LIGHT_RANGE, LIGHT_MODE);
     lps331ap_init(&tp_dev, LPS331AP_I2C, LPS331AP_ADDR, TP_RATE);
 
-    LED_GREEN_OFF;
-    LED_ORANGE_OFF;
-    LED_RED_OFF;
+    LED0_OFF; /* red */
+    LED2_OFF; /* orange */
+    LED1_OFF; /* green */
 
     thread_create(coap_stack, sizeof(coap_stack), PRIO - 1, THREAD_CREATE_STACKTEST, microcoap_server,
                   NULL, "coap");
