@@ -26,7 +26,6 @@
 #include <net/af.h>
 
 #include "board.h"
-#include "kernel.h"
 #include "shell.h"
 #include "xtimer.h"
 #include "net/gnrc.h"
@@ -93,7 +92,7 @@ static int handle_post_led(coap_rw_buffer_t *scratch,
     uint8_t val = inpkt->payload.p[0];
 
     if ((inpkt->payload.len == 1) && ((val == '1') || (val == '0'))) {
-        gpio_write(LED_GPIO, (val - '1'));
+        gpio_write(LED0_PIN, (val - '1'));
         printf("LED something: %c\n", (char)val);
     }
     else {
@@ -227,8 +226,8 @@ static void send_btn_evt(size_t pos, char *buf)
 
 static void send_update(size_t pos, char *buf)
 {
-    char led = (gpio_read(LED_GPIO)) ? '0' : '1';
-    char btn = (gpio_read(BUTTON_GPIO)) ? '1' : '0';
+    char led = (gpio_read(LED0_PIN)) ? '0' : '1';
+    char btn = (gpio_read(BUTTON_PIN)) ? '1' : '0';
 
     pos += sprintf(&buf[pos], "{\"n\":\"a:led\", \"u\":\"bool\", \"v\":\"%c\"},",
                    led);
@@ -255,7 +254,7 @@ void *beaconing(void *arg)
 
     /* register button event */
     debounce_timer.callback = btn_debounce_evt;
-    gpio_init_int(BUTTON_GPIO, GPIO_PULLUP, GPIO_BOTH, btn_evt, &mypid);
+    gpio_init_int(BUTTON_GPIO, GPIO_IN_PU, GPIO_BOTH, btn_evt, &mypid);
 
     while(1) {
         msg_receive(&msg);
