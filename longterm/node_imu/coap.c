@@ -365,7 +365,7 @@ int coap_build(uint8_t *buf, size_t *buflen, const coap_packet_t *pkt)
 
         for (i = 0; i < pkt->numopts; i++) {
                 uint32_t optDelta;
-                uint8_t  len;
+                uint8_t  len = 0;
                 uint8_t  delta = 0;
 
                 if (((size_t)(p - buf)) > *buflen) {

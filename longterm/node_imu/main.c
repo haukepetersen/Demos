@@ -22,7 +22,6 @@
 #include <string.h>
 
 #include "board.h"
-#include "kernel.h"
 #include "xtimer.h"
 #include "byteorder.h"
 
@@ -38,7 +37,7 @@
  */
 #define MAX_ADDR_LEN            (8U)
 
-#define DELAY                   (50000U)
+#define DELAY                   (100000U)
 
 static const ipv6_addr_t gw_addr = {{ 0x20, 0x01, 0xaf, 0xfe, \
                                       0x12, 0x34, 0x00, 0x00, \
@@ -51,14 +50,8 @@ static const uint16_t gw_port = 5683;
 static char payload[512];
 static size_t pos;
 
-void udp_send(ipv6_addr_t addr, uint16_t p, uint8_t *data, size_t len)
+void udp_send(ipv6_addr_t addr, uint16_t port, uint8_t *data, size_t len)
 {
-    uint8_t port[2];
-
-    /* parse port */
-    port[0] = (uint8_t)p;
-    port[1] = p >> 8;
-
     gnrc_pktsnip_t *payload, *udp, *ip;
     /* allocate payload */
     payload = gnrc_pktbuf_add(NULL, data, len, GNRC_NETTYPE_UNDEF);
@@ -67,14 +60,14 @@ void udp_send(ipv6_addr_t addr, uint16_t p, uint8_t *data, size_t len)
         return;
     }
     /* allocate UDP header, set source port := destination port */
-    udp = gnrc_udp_hdr_build(payload, port, 2, port, 2);
+    udp = gnrc_udp_hdr_build(payload, port, port);
     if (udp == NULL) {
         puts("Error: unable to allocate UDP header");
         gnrc_pktbuf_release(payload);
         return;
     }
     /* allocate IPv6 header */
-    ip = gnrc_ipv6_hdr_build(udp, NULL, 0, (uint8_t *)&addr, sizeof(addr));
+    ip = gnrc_ipv6_hdr_build(udp, NULL, &addr);
     if (ip == NULL) {
         puts("Error: unable to allocate IPv6 header");
         gnrc_pktbuf_release(udp);
@@ -184,7 +177,7 @@ int main(void)
         p += sprintf(&payload[p], "]");
         payload[p] = '\0';
 
-        LED_RED_TOGGLE;
+        LED0_TOGGLE;
 
         /* push value using CoAP */
         send_coap_post((uint8_t *)payload, p);
