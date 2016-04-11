@@ -26,7 +26,6 @@
 #include <net/af.h>
 
 #include "board.h"
-#include "kernel.h"
 #include "shell.h"
 #include "xtimer.h"
 #include "net/gnrc.h"
