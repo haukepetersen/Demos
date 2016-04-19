@@ -11,7 +11,7 @@
  * @{
  *
  * @file
- * @brief       Embedded World 2016 Demo: CoAP node
+ * @brief       Embedded World 2016 Demo: CoAP node (iotlab-m3)
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  * @author      Cenk Gündoğan <cnkgndgn@gmail.com>
@@ -34,89 +34,74 @@
 #include "net/conn.h"
 #include "net/conn/udp.h"
 #include "coap.h"
-#include "saul_reg.h"
+#include "periph/gpio.h"
+#include "isl29020.h"
+#include "lps331ap.h"
 #include "periph/gpio.h"
 
 #define UPDATE_INTERVAL     (1000 * 1000U)
-#define EVT_REPEAT_DELAY    (1000)
-#define DEBOUNCE_TIME       (50 * 1000)
-
-#define EVT_REPEAT          (2)
-
 #define MSG_UPDATE_EVENT    (0x3338)
-#define MSG_BUTTON_EVENT    (0x3339)
 
-
-#define Q_SZ                (8)
+#define Q_SZ                (4)
 #define PRIO                (THREAD_PRIORITY_MAIN - 1)
 #define COAP_SERVER_PORT    (5683)
 #define SPORT               (1234)
 #define UDP_PORT            (5683)
-#define MAX_RESPONSE_LEN    500
 
+#define LIGHT_MODE          ISL29020_MODE_AMBIENT
+#define LIGHT_RANGE         ISL29020_RANGE_16K
+#define TP_RATE             LPS331AP_RATE_7HZ
+
+#ifdef WITH_SHELL
+static msg_t _main_msg_q[Q_SZ];
+static char beac_stack[THREAD_STACKSIZE_DEFAULT];
+#endif
 static msg_t _coap_msg_q[Q_SZ], _beac_msg_q[Q_SZ];
-static char coap_stack[THREAD_STACKSIZE_MAIN], beac_stack[THREAD_STACKSIZE_MAIN];
+static char coap_stack[THREAD_STACKSIZE_DEFAULT];
+
+static isl29020_t light_dev;
+static lps331ap_t tp_dev;
 
 static uint8_t udp_buf[512];
 static uint8_t scratch_raw[1024];      /* microcoap scratch buffer */
 static coap_rw_buffer_t scratch_buf = { scratch_raw, sizeof(scratch_raw) };
 static ipv6_addr_t dst_addr;
 
-static xtimer_t debounce_timer;
-
 /* buffer for composing SemML messages in */
 static char p_buf[512];
 static size_t initial_pos;
 
-static uint8_t response[MAX_RESPONSE_LEN] = { 0 };
+static const coap_header_t req_hdr = {
+        .version = 1,
+        .type    = COAP_TYPE_NONCON,
+        .tkllen  = 0,
+        .code    = COAP_METHOD_POST,
+        .mid     = {5, 57}            // is equivalent to 1337 when converted to uint16_t
+};
 
-
-
-static const coap_endpoint_path_t path_riot_board = { 2, { "riot", "board" } };
-static const coap_endpoint_path_t path_led = {1, {"led"} };
+static const coap_endpoint_path_t path_led = { 1, { "led" } };
 
 static int handle_post_led(coap_rw_buffer_t *scratch,
-                                 const coap_packet_t *inpkt, coap_packet_t *outpkt,
-                                 uint8_t id_hi, uint8_t id_lo)
+                           const coap_packet_t *inpkt, coap_packet_t *outpkt,
+                           uint8_t id_hi, uint8_t id_lo)
 {
     coap_responsecode_t resp = COAP_RSPCODE_CHANGED;
-    printf("Hello, we got a post request to LED\n");
-    printf("payload has length %i\n", (int)inpkt->payload.len);
-
     uint8_t val = inpkt->payload.p[0];
 
     if ((inpkt->payload.len == 1) && ((val == '1') || (val == '0'))) {
         gpio_write(LED0_PIN, (val - '1'));
-        printf("LED something: %c\n", (char)val);
     }
     else {
-        puts("wrong payload");
         resp = COAP_RSPCODE_NOT_ACCEPTABLE;
     }
-
 
     return coap_make_response(scratch, outpkt, NULL, 0,
                               id_hi, id_lo, &inpkt->token, resp,
                               COAP_CONTENTTYPE_TEXT_PLAIN, false);
 }
 
-static int handle_get_riot_board(coap_rw_buffer_t *scratch,
-                                 const coap_packet_t *inpkt, coap_packet_t *outpkt,
-                                 uint8_t id_hi, uint8_t id_lo)
-{
-    const char *riot_name = RIOT_BOARD;
-    int len = strlen(RIOT_BOARD);
-
-    memcpy(response, riot_name, len);
-
-    return coap_make_response(scratch, outpkt, (const uint8_t *)response, len,
-                              id_hi, id_lo, &inpkt->token, COAP_RSPCODE_CONTENT,
-                              COAP_CONTENTTYPE_TEXT_PLAIN, false);
-}
-
 const coap_endpoint_t endpoints[] =
 {
-    { COAP_METHOD_GET,	handle_get_riot_board, &path_riot_board, "ct=0" },
     { COAP_METHOD_POST,  handle_post_led, &path_led, "ct=0" },
     /* marks the end of the endpoints array: */
     { (coap_method_t)0, NULL, NULL, NULL }
@@ -191,42 +176,28 @@ void send_coap_post(uint8_t *data, size_t len)
                     AF_INET6, SPORT, UDP_PORT);
 }
 
-static void btn_debounce_evt(void *arg)
-{
-    (void)arg;
-    gpio_irq_enable(BUTTON_GPIO);
-}
-
-static void btn_evt(void *arg)
-{
-    msg_t m = { .type = MSG_BUTTON_EVENT };
-    gpio_irq_disable(BUTTON_GPIO);
-    xtimer_set(&debounce_timer, DEBOUNCE_TIME);
-    msg_send(&m, *((kernel_pid_t *)arg));
-}
-
-static void send_btn_evt(size_t pos, char *buf)
-{
-    char btn = (gpio_read(BUTTON_GPIO)) ? '0' : '1';
-
-    pos += sprintf(&buf[pos], "{\"n\":\"a:button\", \"u\":\"bool\", \"v\":\"%c\"}]",
-                   btn);
-
-    for (int i = 0; i < EVT_REPEAT; i++) {
-        send_coap_post((uint8_t *)buf, pos);
-        xtimer_usleep(EVT_REPEAT_DELAY);
-    }
-}
-
 static void send_update(size_t pos, char *buf)
 {
     char led = (gpio_read(LED0_PIN)) ? '0' : '1';
-    char btn = (gpio_read(BUTTON_PIN)) ? '1' : '0';
+    int lux, pres, pres_abs, temp, temp_abs;
+
+    lux = isl29020_read(&light_dev);
+
+    pres = lps331ap_read_pres(&tp_dev);
+    temp = lps331ap_read_temp(&tp_dev);
+    pres_abs = pres / 1000;
+    pres -= pres_abs * 1000;
+    temp_abs = temp / 1000;
+    temp -= temp_abs * 1000;
 
     pos += sprintf(&buf[pos], "{\"n\":\"a:led\", \"u\":\"bool\", \"v\":\"%c\"},",
                    led);
-    pos += sprintf(&buf[pos], "{\"n\":\"a:button\", \"u\":\"bool\", \"v\":\"%c\"}]",
-                   btn);
+    pos += sprintf(&buf[pos], "{\"n\":\"s:light\", \"u\":\"lux\", \"v\":\"%d\"},",
+                   lux);
+    pos += sprintf(&buf[pos], "{\"n\":\"s:pressure\", \"u\":\"bar\", \"v\":\"%2i.%03i\"},",
+                   pres_abs, pres);
+    pos += sprintf(&buf[pos], "{\"n\":\"s:temp\", \"u\":\"°C\", \"v\":\"%2i.%03i\"}]",
+                   temp_abs, temp);
 
     send_coap_post((uint8_t *)buf, pos);
 }
@@ -246,10 +217,6 @@ void *beaconing(void *arg)
     update_msg.type = MSG_UPDATE_EVENT;
     xtimer_set_msg(&status_timer, UPDATE_INTERVAL, &update_msg, mypid);
 
-    /* register button event */
-    debounce_timer.callback = btn_debounce_evt;
-    gpio_init_int(BUTTON_GPIO, GPIO_IN_PU, GPIO_BOTH, btn_evt, &mypid);
-
     while(1) {
         msg_receive(&msg);
 
@@ -257,9 +224,6 @@ void *beaconing(void *arg)
             case MSG_UPDATE_EVENT:
                 xtimer_set_msg(&status_timer, UPDATE_INTERVAL, &update_msg, mypid);
                 send_update(initial_pos, p_buf);
-                break;
-            case MSG_BUTTON_EVENT:
-                send_btn_evt(initial_pos, p_buf);
                 break;
             default:
                 break;
@@ -270,22 +234,25 @@ void *beaconing(void *arg)
     return NULL;
 }
 
+#ifdef WITH_SHELL
 static const shell_command_t shell_commands[] = { { NULL, NULL, NULL } };
+#endif
 
 int main(void)
 {
+#ifdef WITH_SHELL
+    /* initialize message queue */
+    msg_init_queue(_main_msg_q, Q_SZ);
+#endif
+
     eui64_t iid;
-    // uint16_t chan = 15;
     netopt_enable_t acks = NETOPT_DISABLE;
     kernel_pid_t ifs[GNRC_NETIF_NUMOF];
 
     gnrc_netif_get(ifs);
     gnrc_netapi_set(ifs[0], NETOPT_AUTOACK, 0, &acks, sizeof(acks));
     ipv6_addr_from_str(&dst_addr, "2001:affe:1234::1");
-    // gnrc_netapi_set(ifs[0], NETOPT_CHANNEL, 0, &chan, sizeof(chan));
     // ipv6_addr_from_str(&dst_addr, "fd38:3734:ad48:0:211d:50ce:a189:7cc4");
-
-
 
     /* initialize senml payload */
     gnrc_netapi_get(ifs[0], NETOPT_IPV6_IID, 0, &iid, sizeof(eui64_t));
@@ -296,15 +263,24 @@ int main(void)
                            iid.uint8[4], iid.uint8[5], iid.uint8[6], iid.uint8[7]);
     initial_pos += sprintf(&p_buf[initial_pos], "\"},");
 
+    /* initialize ISL29020 Light Sensor */
+    isl29020_init(&light_dev, ISL29020_I2C, ISL29020_ADDR, LIGHT_RANGE, LIGHT_MODE);
+    lps331ap_init(&tp_dev, LPS331AP_I2C, LPS331AP_ADDR, TP_RATE);
+
+    LED0_OFF; /* red */
+    LED2_OFF; /* orange */
+    LED1_OFF; /* green */
 
     thread_create(coap_stack, sizeof(coap_stack), PRIO - 1, THREAD_CREATE_STACKTEST, microcoap_server,
                   NULL, "coap");
+#ifdef WITH_SHELL
     thread_create(beac_stack, sizeof(beac_stack), PRIO, THREAD_CREATE_STACKTEST, beaconing,
                   NULL, "beaconing");
-
-
     char line_buf[SHELL_DEFAULT_BUFSIZE];
     shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
+#else
+    beaconing(NULL);
+#endif
 
     return 0;
 }

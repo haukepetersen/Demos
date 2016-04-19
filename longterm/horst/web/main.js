@@ -34,9 +34,11 @@ const VIEW_S_RGB    = 's:rgb';
 const VIEW_S_ACC    = 's:acc';
 const VIEW_S_MAG    = 's:mag';
 const VIEW_S_GYRO   = 's:gyro';
+const VIEW_S_WINDOW = 's:window';
 const VIEW_A_RGB    = 'a:rgb';
 const VIEW_A_LED    = 'a:led';
-const VIEW_A_BUTTON = 'a:button';
+const VIEW_A_BUTTON = 's:btn';
+const VIEW_A_WINDOW = 'a:window';
 
 const STALE_TIME    = 5000;     /* node gets stale if no updated in 5 seconds */
 
@@ -49,16 +51,17 @@ var charts = {};
 var active_node = undefined;
 
 var chart_opts = {
-    's:temp':   {'maxValue': 75, 'minValue': 0, 'millisPerPixel': 30},
+    's:temp':   {'maxValue': 40, 'minValue': 20, 'millisPerPixel': 30},
     's:hum':    {'maxValue': 100, 'minValue': 0, 'millisPerPixel': 30},
     's:light':  {'maxValue': 1500, 'minValue': 0, 'millisPerPixel': 30},
     's:rgb':    {'maxValue': 256, 'minValue': 0, 'millisPerPixel': 30},
-    's:acc':    {'maxValue': 4000, 'minValue': -4000, 'millisPerPixel': 15},
-    's:mag':    {'maxValue': 500, 'minValue': -500, 'millisPerPixel': 15},
+    's:acc':    {'maxValue': 2000, 'minValue': -2000, 'millisPerPixel': 15},
+    's:mag':    {'maxValue': 2000, 'minValue': -2000, 'millisPerPixel': 15},
     's:gyro':   {'maxValue': 2500, 'minValue': -2500, 'millisPerPixel': 15},
+    's:btn':    {'maxValue': 1, 'minValue': 0, 'millisPerPixel': 30},
     'a:rgb':    {'maxValue': 256, 'minValue': 0, 'millisPerPixel': 30},
     'a:led':    {'maxValue': 1, 'minValue': 0, 'millisPerPixel': 30},
-    'a:button': {'maxValue': 1, 'minValue': 0, 'millisPerPixel': 30},
+    'a:window': {'maxValue': 1, 'minValue': 0, 'millisPerPixel': 30},
 };
 
 var line_colors = [
@@ -107,6 +110,7 @@ var snip_infobox = function(id, node) {
 var snip_a_led = function(parent, k, dev) {
     var time = new Date(dev.time[0]).toLocaleTimeString();
     var vals = val_toString(dev.vals[0]);
+    var id = k.replace(':', '-');
 
     var c = '';
     c +=    '<div class="row">';
@@ -126,16 +130,124 @@ var snip_a_led = function(parent, k, dev) {
     c +=      '<span id="' + k.replace(':', '-') + 'val" class="v">' + vals + '</span>';
     c +=    '</div>';
     c +=    '<div class="row">';
-    c +=        '<input type="button" value="on" id="' + k.replace(':', '-') + '_set_on" />';
-    c +=        '<input type="button" value="off" id="' + k.replace(':', '-') + '_set_off" />';
+    c +=        '<div class="onoffswitch">'
+    c +=            '<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="' + id + '" ' + (parseInt(vals) ? 'checked' : '')  + '>'
+    c +=            '<label class="onoffswitch-label" for="' + id + '">'
+    c +=                '<span class="onoffswitch-inner"></span>'
+    c +=                '<span class="onoffswitch-switch"></span>'
+    c +=            '</label>'
+    c +=        '</div>'
+    c +=    '</div>';
+
+    parent.html(c);
+    $("#" + id).on('click', function() {
+        var val = $(this).prop("checked") ? '1' : '0';
+        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'led', 'val': val});
+    });
+}
+
+var snip_btn = function(parent, k, dev) {
+    var time = new Date(dev.time[0]).toLocaleTimeString();
+    var vals = val_toString(dev.vals[0]);
+    var id = k.replace(':', '-');
+
+    var c = '';
+    c +=    '<div class="row">';
+    c +=      '<div class="col">';
+    c +=        '<span class="k">Type:</span>';
+    c +=        '<span class="v">' + k + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Unit:</span>';
+    c +=        '<span class="v">' + dev.unit + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Last Update:</span>';
+    c +=        '<span id="' + id + 'update" class="v">' + time + '</span>';
+    c +=      '</div>';
+    c +=    '</div>';
+    c +=    '<div class="row">';
+    c +=      '<span class="k">Value(s):</span>';
+    c +=      '<span id="' + id + 'val" class="v">' + vals + '</span>';
+    c +=    '</div>';
+    c +=    '<div class="row">';
+    c +=        '<div class="onoffswitch">'
+    c +=            '<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="' + id + '" ' + (parseInt(vals) ? 'checked' : '')  + '>'
+    c +=            '<label class="onoffswitch-label" for="' + id + '">'
+    c +=                '<span class="onoffswitch-inner"></span>'
+    c +=                '<span class="onoffswitch-switch"></span>'
+    c +=            '</label>'
+    c +=        '</div>'
+    c +=    '</div>';
+    parent.html(c);
+}
+
+var snip_a_window = function(parent, k, dev) {
+    var time = new Date(dev.time[0]).toLocaleTimeString();
+    var vals = val_toString(dev.vals[0]);
+
+    var c = '';
+    c +=    '<div class="row">';
+    c +=      '<div class="col">';
+    c +=        '<span class="k">Type:</span>';
+    c +=        '<span class="v">' + k + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Unit:</span>';
+    c +=        '<span class="v">' + dev.unit + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Last Update:</span>';
+    c +=        '<span id="' + k.replace(':', '-') + 'update" class="v">' + time + '</span>';
+    c +=      '</div>';
+    c +=    '</div>';
+    c +=    '<div class="row">';
+    c +=      '<span class="k">Value(s):</span>';
+    c +=      '<span id="' + k.replace(':', '-') + 'val" class="v">' + vals + '</span>';
+    c +=    '</div>';
+    c +=    '<div class="row">';
+    c +=        '<input type="button" value="open" id="' + k.replace(':', '-') + '_set_on" />';
+    c +=        '<input type="button" value="close" id="' + k.replace(':', '-') + '_set_off" />';
     c +=    '</div>';
 
     parent.html(c);
     d3.select("#" + k.replace(':', '-') + "_set_on").on('click', function() {
-        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'led', 'val': '1'});
+        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'window', 'val': '1'});
     });
     d3.select("#" + k.replace(':', '-') + "_set_off").on('click', function() {
-        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'led', 'val': '0'});
+        socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'window', 'val': '0'});
+    });
+}
+
+var snip_a_rgb = function(parent, k, dev) {
+    var time = new Date(dev.time[0]).toLocaleTimeString();
+    var vals = val_toString(dev.vals[0]);
+
+    var c = '';
+    c +=    '<div class="row">';
+    c +=      '<div class="col">';
+    c +=        '<span class="k">Type:</span>';
+    c +=        '<span class="v">' + k + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Unit:</span>';
+    c +=        '<span class="v">' + dev.unit + '</span>';
+    c +=      '</div><div class="col">';
+    c +=        '<span class="k">Last Update:</span>';
+    c +=        '<span id="' + k.replace(':', '-') + 'update" class="v">' + time + '</span>';
+    c +=      '</div>';
+    c +=    '</div>';
+    c +=    '<div class="row">';
+    c +=      '<span class="k">Value(s):</span>';
+    c +=      '<span id="' + k.replace(':', '-') + 'val" class="v">' + vals + '</span>';
+    c +=    '</div>';
+    c +=    '<div class="row">';
+    c +=        '<input id="' + k.replace(':', '-') + '_rgb" value="' + vals + '">';
+    c +=    '</div>';
+
+    parent.html(c);
+
+    $("#" + (k.replace(':', '-') + "_rgb")).spectrum({
+        'flat' : true,
+        'move': function(color) {
+            socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'rgb',
+                        'val': color.toHexString()});
+        },
     });
 }
 
@@ -227,19 +339,33 @@ var display_node = function(id, node) {
         .attr('class', 'snip info')
         .html(snip_infobox(id, node));
 
+    active_node = id;
+
     Object.keys(node.devs).forEach(function(k) {
         var view = nodeview.append('div').attr('class', 'snip');
 
         if (k == 'a:led') {
-            snip_a_led(view, k, node.devs[k]);
+            var id = k.replace(':', '-');
+            snip_btn(view, k, node.devs[k]);
+            $("#" + id).on('click', function() {
+                var val = $(this).prop("checked") ? '1' : '0';
+                socket.emit('coap_send', {'addr': nodes[active_node].ip, 'ep': 'led', 'val': val});
+            });
+        }
+        else if (k == 'a:window') {
+            snip_a_window(view, k, node.devs[k]);
+        }
+        else if (k == 'a:rgb') {
+            snip_a_rgb(view, k, node.devs[k]);
+        }
+        else if (k == 's:btn') {
+            snip_btn(view, k, node.devs[k]);
         }
         else {
             snip_graph(view, k, node.devs[k]);
             add_chart(k, node.devs[k]);
         }
     });
-
-    active_node = id;
 }
 
 var update_node_view = function(id, node) {
@@ -251,10 +377,16 @@ var update_node_view = function(id, node) {
         var dev = node.devs[k];
         var time = new Date(dev.time[0]).toLocaleTimeString();
         var vals = val_toString(dev.vals[0]);
-        d3.select("#" + k.replace(':', '-') + 'update').html(time);
-        d3.select("#" + k.replace(':', '-') + 'val').html(vals);
+        var id = k.replace(':', '-');
 
-        if (k != 'a:led') {
+        d3.select("#" + id + 'update').html(time);
+        d3.select("#" + id + 'val').html(vals);
+
+        if ((k == 's:btn') || (k == 'a:led')) {
+            val = parseInt(dev.vals[0]);
+            $('#' + id).prop("checked", val);
+        }
+        else if ((k != 'a:rgb') && (k != 'a:window')) {
             update_chart(k, dev);
         }
     }
