@@ -71,13 +71,7 @@ static size_t initial_pos;
 
 static uint8_t response[MAX_RESPONSE_LEN] = { 0 };
 
-static const coap_header_t req_hdr = {
-        .version = 1,
-        .type    = COAP_TYPE_NONCON,
-        .tkllen  = 0,
-        .code    = COAP_METHOD_POST,
-        .mid     = {5, 57}            // is equivalent to 1337 when converted to uint16_t
-};
+
 
 static const coap_endpoint_path_t path_riot_board = { 2, { "riot", "board" } };
 static const coap_endpoint_path_t path_led = {1, {"led"} };
