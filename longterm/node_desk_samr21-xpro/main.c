@@ -27,7 +27,6 @@
 #include <net/af.h>
 
 #include "board.h"
-#include "kernel.h"
 #include "shell.h"
 #include "xtimer.h"
 #include "net/gnrc.h"
@@ -84,6 +83,7 @@ static int handle_post_window(coap_rw_buffer_t *scratch,
                            const coap_packet_t *inpkt, coap_packet_t *outpkt,
                            uint8_t id_hi, uint8_t id_lo)
 {
+    puts("Handle post window");
     coap_responsecode_t resp = COAP_RSPCODE_CHANGED;
 
     uint8_t val = inpkt->payload.p[0];
@@ -138,6 +138,7 @@ void *microcoap_server(void *arg)
         if (0 == (rc = coap_parse(&pkt, udp_buf, rc))) {
             coap_packet_t rsppkt;
 
+            puts("Handle coap request");
             /* handle CoAP request */
             coap_handle_req(&scratch_buf, &pkt, &rsppkt, false, false);
 
