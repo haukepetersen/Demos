@@ -37,16 +37,18 @@
 #define NODE_ID             ("p.schmerzl")
 #endif
 
+#define TOPIC_SENSE         ("msa/sense")
+
 #define LINKPIN             (GPIO_PIN(PORT_E, 2))
 #define LINKPORT            (UART_DEV(1))
 
 #define STACKSIZE           (THREAD_STACKSIZE_DEFAULT)
 #define PRIO                (THREAD_PRIORITY_MAIN - 2)
 
-#define FLAG_CH             (0x0001)
-#define FLAG_CON            (0x0002)
-#define FLAG_SEN            (0x0004)
-#define FLAG_ALL            (0x0007)
+#define FLAG_CH             (0x0100)
+#define FLAG_CON            (0x0200)
+#define FLAG_SEN            (0x0400)
+#define FLAG_ALL            (0x0700)
 
 #define TIMEOUT_SAMPLE      (1 * US_PER_SEC)
 #define TIMEOUT_CONNECT     (5 * US_PER_SEC)
@@ -121,7 +123,7 @@ int main(void)
 {
     evt_handler_thread = (thread_t *)sched_active_thread;
     sock_udp_ep_t gw_ep = SOCK_IPV6_EP_ANY;
-    emcute_topic_t topic = { "msa/sense", 0 };
+    emcute_topic_t topic = { TOPIC_SENSE, 0 };
 
     /* init the encoder */
     encode_init();
