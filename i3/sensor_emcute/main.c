@@ -168,8 +168,6 @@ int main(void)
                 state = FLAG_SEN;
             }
 
-            puts("FLAG_CON event");
-
             /* try to connect to gateway */
             if (emcute_con(&gw_ep, true, NULL, NULL, 0, 0) != EMCUTE_OK) {
                 tim_evt.arg = (void *)FLAG_CON;
