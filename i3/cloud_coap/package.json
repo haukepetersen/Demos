@@ -1,0 +1,13 @@
+{
+  "name": "CoAP_Cloudsim",
+  "version": "0.1.0",
+  "description": "I3 CoAP cloud simulator",
+  "main": "cloud_coap.js",
+  "repository": "",
+  "author": "Hauke Petersen <hauke.petersen@fu-berlin.de",
+  "license": "GPLv2",
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "coap": "*"
+  }
+}
