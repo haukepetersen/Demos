@@ -27,7 +27,7 @@ CFLAGS += -DDEVELHELP
 # we use a different channel for the demo
 CFLAGS += -DIEEE802154_DEFAULT_CHANNEL=17
 # and relax emcute timings
-CFLAGS += -DEMCUTE_T_RETRY=1
+CFLAGS += -DEMCUTE_T_RETRY=1 -DEMCUTE_KEEPALIVE=30
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
