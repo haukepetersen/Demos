@@ -44,6 +44,7 @@
 #define RES_STATUS          ("/msa/status")
 
 #define TIMEOUT_SAMPLE      (1 * US_PER_SEC)
+#define TIMEOUT_REGISTER    (5 * US_PER_SEC)
 
 #define JSON_BUFISZE        (100U)
 
@@ -165,6 +166,8 @@ static void *sense(void *arg)
     (void)arg;
 
     while (1) {
+        xtimer_usleep(TIMEOUT_SAMPLE);
+
         size_t len = read_and_encode(json_buf);
         printf("sense: new data - %s\n", json_buf);
 
@@ -178,11 +181,11 @@ static void *sense(void *arg)
             printf("sense: data send via CoAP\n");
         }
         else {
+            xtimer_usleep(TIMEOUT_REGISTER);
             printf("sense: no one is observing, sending register message\n");
             cmd_reg(0, NULL);
         }
 
-        xtimer_usleep(TIMEOUT_SAMPLE);
     }
 
     return NULL;

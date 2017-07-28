@@ -60,9 +60,9 @@ var dump_data = function(head, hi, data)
 }
 
 var on_sense_update = function(res) {
-    dump_data("data", res.rsinfo, res.payload);
+    dump_data("  data", res.rsinfo, res.payload);
     res.on('data', function(foo) {
-        dump_data("data", res.rsinfo, res.payload);
+        dump_data("  data", res.rsinfo, res.payload);
     });
 };
 
